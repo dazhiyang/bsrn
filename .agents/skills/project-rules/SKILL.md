@@ -5,16 +5,7 @@ description: Standards and governance for the bsrn project, including naming con
 
 # 🤖 Project Standards & Governance
 
-This document defines the mandatory development standards, naming conventions, and scientific protocols for the `bsrn` project.
-
-## ⚠️ CORE BEHAVIORAL DIRECTIVES
-
-- **MUST** use absolute paths for all imports within the codebase.
-- **DO NOT** use `Glob` or `Grep` for exploratory searches; prefer structured directory listing and file viewing.
-- **NEVER** execute destructive shell commands (e.g., `rm`, `kill`, `git reset`) without explicit user permission.
-- **MUST** adhere to the bilingual documentation format for all new functions.
-
----
+This document defines the naming conventions, scientific symbols, and bilingual (English/Chinese) translations used throughout the `bsrn` project.
 
 ## 📏 Radiometric Parameters
 
@@ -47,8 +38,15 @@ Code variables and documentation **MUST** strictly adhere to the following table
 ## 📝 Documentation & Coding Rules
 
 ### 1. Bilingual Comments
-- **MUST** use the format: `Description in English / 对应中文描述`
-- Example: `# Fetch data from FTP / 从 FTP 获取数据`
+- **MUST** follow the length-dependent format:
+    - If the combined line is shorter than 80 characters: Use `# English / 中文` format on a single line.
+    - If the combined line exceeds 80 characters: Use two separate lines.
+- Example (Short): `# Fetch data / 获取数据`
+- Example (Long):
+    ```python
+    # Calculate extraterrestrial horizontal irradiance
+    # 计算地外水平辐照度
+    ```
 
 ### 2. Docstring Structure
 - **MUST** use NumPy/SciPy style with bilingual descriptions.
@@ -80,4 +78,3 @@ def function_name(param):
 - **DO NOT** capitalize the long form of abbreviations (e.g., use "global horizontal irradiance").
 - **MUST** limit line length to a maximum of 110 characters.
 - **MUST** use sentence case for scientific paper titles in references.
-- **DO NOT** use a `qc_` prefix for quality control functions; they **MUST** end with `_test`.

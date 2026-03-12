@@ -13,7 +13,7 @@ Citations:
 measurements." Open Atmos. Sci. J 2.1 (2008): 23-37.
 """
 def closure_low_sza_test(ghi, bni, dhi, zenith):
-    """
+    r"""
     Check consistency between GHI, BNI, and DHI for low solar zenith angles ($Z \le 75^\circ$).
     检查低太阳天顶角 ($Z \le 75^\circ$) 下 GHI、BNI 和 DHI 之间的一致性。
 
@@ -40,7 +40,7 @@ def closure_low_sza_test(ghi, bni, dhi, zenith):
     """
     mu0 = np.cos(np.radians(zenith))
     
-    # Bottom of the fraction: DNI * cos(SZA) + DIF
+    # Calculate GHI from BNI and DHI / 根据 BNI 和 DHI 计算 GHI
     ghi_calc = bni * mu0 + dhi
     ghi_calc_safe = np.where(ghi_calc > 0, ghi_calc, np.nan)
     
@@ -63,7 +63,7 @@ Citations:
 measurements." Open Atmos. Sci. J 2.1 (2008): 23-37.
 """
 def closure_high_sza_test(ghi, bni, dhi, zenith):
-    """
+    r"""
     Check consistency between GHI, BNI, and DHI for high solar zenith angles ($Z > 75^\circ$).
     检查高太阳天顶角 ($Z > 75^\circ$) 下 GHI、BNI 和 DHI 之间的一致性。
 
@@ -90,7 +90,7 @@ def closure_high_sza_test(ghi, bni, dhi, zenith):
     """
     mu0 = np.cos(np.radians(zenith))
     
-    # Bottom of the fraction: DNI * cos(SZA) + DIF
+    # Calculate GHI from BNI and DHI / 根据 BNI 和 DHI 计算 GHI
     ghi_calc = bni * mu0 + dhi
     ghi_calc_safe = np.where(ghi_calc > 0, ghi_calc, np.nan)
     

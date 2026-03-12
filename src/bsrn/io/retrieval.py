@@ -2,7 +2,7 @@
 bsrn data retrieval module.
 Handles FTP connections and automated downloads.
 BSRN 数据获取模块。
-处理 FTP 连接 and 自动下载。
+处理 FTP 连接并进行自动下载。
 """
 
 from ftplib import FTP
@@ -63,6 +63,7 @@ def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"
                                 ftp.login(user=username, passwd=password)
                                 ftp.set_pasv(True)
                             except:
+                                # Connection failed / 连接失败
                                 pass
                         else:
                             print(f"BSRN FTP: Failed to retrieve {stn} after retry: {e}")
@@ -143,7 +144,7 @@ def download_bsrn_single(station, year, month, local_dir, username, password, ho
         下载文件的路径，如果失败则返回 None。
     """
     # BSRN filenames use 2-digit months and 2-digit years, strictly lowercase
-    # BSRN 文件名使用 2 位月份和 2 位年份，严格小写
+    # BSRN 文件名使用 2 位月份和 2 位年份，且严格小写
     year_str = str(year)[-2:]
     month_int = int(month)
     filename = f"{station.lower()}{month_int:02d}{year_str}.dat.gz"
@@ -292,9 +293,11 @@ def download_bsrn_files(filenames, local_dir, username, password, host="ftp.bsrn
                 except Exception as e:
                     print(f"BSRN FTP: Attempt {attempt+1} failed for {filename}: {e}")
                     # Close and set ftp to None for reconnection on next attempt
+                    # 关闭并将 ftp 设置为 None 以便在下次尝试时重新连接
                     try:
                         ftp.quit()
                     except:
+                        # quit failed / 退出失败
                         pass
                     ftp = None
                     if attempt < retries - 1:

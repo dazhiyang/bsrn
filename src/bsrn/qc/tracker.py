@@ -53,28 +53,28 @@ def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear
     if ghi_clear is None:
         if ghi_extra is None:
             raise ValueError("GHIE (ghi_extra) must be provided if GHIC (ghi_clear) is not supplied. / 如果未提供 GHIC (ghi_clear)，则必须提供 GHIE (ghi_extra)。")
-        # GHIC ($G_{hc}$) = 0.8 * GHIE ($E_{0}$)
+        # GHIC ($G_{hc}$) = 0.8 * GHIE ($E_{0}$) / 晴空水平总辐照度参考值
         ghi_clear = 0.8 * ghi_extra
         
     if dhi_clear is None:
-        # DHIC ($D_{hc}$) = 0.165 * GHIC ($G_{hc}$)
+        # DHIC ($D_{hc}$) = 0.165 * GHIC ($G_{hc}$) / 晴空水平散射辐照度参考值
         dhi_clear = 0.165 * ghi_clear
         
     if bni_clear is None:
-        # BNIC ($B_{nc}$) = (GHIC - DHIC) / mu0
+        # BNIC ($B_{nc}$) = (GHIC - DHIC) / mu0 / 晴空法向直接辐照度参考值
         bni_clear = (ghi_clear - dhi_clear) / np.maximum(mu0, 0.01)
     
     # Tracker-off Condition / 跟踪器失准条件:
     # A sunny day where GHI measurement is high (close to clear-sky) but BNI is low / 晴天 GHI 高但 BNI 低
     
     # Conditions per reference image / 根据参考图的条件:
-    # Term 1: (GHIC - GHI) / (GHIC + GHI) < 0.2
+    # Term 1: (GHIC - GHI) / (GHIC + GHI) < 0.2 / 条件 1: GHI 接近晴空值
     term1 = (ghi_clear - ghi) / (ghi_clear + ghi)
     
-    # Term 2: (BNIC - BNI) / (BNIC + BNI) > 0.95
+    # Term 2: (BNIC - BNI) / (BNIC + BNI) > 0.95 / 条件 2: BNI 远低于晴空值
     term2 = (bni_clear - bni) / (bni_clear + bni)
     
-    # 3. SZA < 85
+    # Tracker is off if SZA < 85 / 如果天顶角 < 85 则判断跟踪器失准
     tracker_is_off = (term1 < 0.2) & (term2 > 0.95) & (zenith < 85)
     
     if hasattr(tracker_is_off, 'iloc'):

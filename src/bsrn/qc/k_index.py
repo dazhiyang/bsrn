@@ -145,7 +145,7 @@ ISES Solar World Congress. International Solar Energy Society, 2021.
 measurements." Open Atmos. Sci. J 2.1 (2008): 23-37.
 """
 def k_low_sza_test(ghi, dhi, zenith):
-    """
+    r"""
     Check diffuse fraction ($k$) for low solar zenith angles ($Z < 75^\circ$).
     检查低太阳天顶角 ($Z < 75^\circ$) 下的散射分数 ($k$)。
 
@@ -188,7 +188,7 @@ ISES Solar World Congress. International Solar Energy Society, 2021.
 measurements." Open Atmos. Sci. J 2.1 (2008): 23-37.
 """
 def k_high_sza_test(ghi, dhi, zenith):
-    """
+    r"""
     Check diffuse fraction ($k$) for high solar zenith angles ($Z \ge 75^\circ$).
     检查高太阳天顶角 ($Z \ge 75^\circ$) 下的散射分数 ($k$)。
 
