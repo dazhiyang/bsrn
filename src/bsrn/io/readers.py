@@ -72,22 +72,32 @@ def read_bsrn_station_to_archive(file_path):
     if len(data_lines) % 2 != 0:
         data_lines = data_lines[:-1]
 
-    line1_list = []
-    line2_list = []
-    
+    # Extract year and month from filename (e.g., qiq0124.dat.gz -> Jan 2024)
+    # 从文件名提取年份和月份（例如 qiq0124.dat.gz -> 2024年1月）
+    filename = os.path.basename(file_path)
+    try:
+        # BSRN format: XXXMMYY.dat.gz
+        month_str = filename[3:5]
+        year_str = filename[5:7]
+        year = 2000 + int(year_str)
+        month = int(month_str)
+    except Exception as e:
+        print(f"Error: Could not parse year/month from filename {filename}: {e}")
+        return None
+
+    data_list = []
     for i in range(0, len(data_lines), 2):
         l1 = data_lines[i].split()
         l2 = data_lines[i+1].split()
 
-        # We need specific columns as per R script logic / 根据 R 脚本逻辑提取特定列
+        # Extract specific columns for radiation and meteorology / 提取特定的辐射和气象参数列
         # Python indices (0-based):
-        # Line 1: 0(day), 1(min), 2(ghi), 6(bni)
-        # Line 2: 0(dhi), 4(lwd), 8(temp), 9(rh), 10(pressure)
-        
+        # Line 1: 0(day), 1(min), 2(ghi mean), 6(bni mean)
+        # Line 2: 0(dhi mean), 4(lwd mean), 8(temp), 9(rh), 10(pressure)
         if len(l1) >= 7 and len(l2) >= 11:
             row = [
-                float(l1[0]),   # day_number
-                float(l1[1]),   # minute_number
+                int(l1[0]),     # day
+                int(l1[1]),     # minute-of-day (0-1439)
                 float(l1[2]),   # ghi
                 float(l1[6]),   # bni
                 float(l2[0]),   # dhi
@@ -96,16 +106,34 @@ def read_bsrn_station_to_archive(file_path):
                 float(l2[9]),   # rh
                 float(l2[10])   # pressure
             ]
-            line1_list.append(row)
+            data_list.append(row)
 
-    columns = ["day_number", "minute_number", "ghi", "bni", "dhi", "lwd", "temp", "rh", "pressure"]
-    df = pd.DataFrame(line1_list, columns=columns)
+    columns = ["day", "minute", "ghi", "bni", "dhi", "lwd", "temp", "rh", "pressure"]
+    df = pd.DataFrame(data_list, columns=columns)
 
-    # Replace BSRN missing value indicators (-1) with NaN
-    # 将 BSRN 缺失值标记 (-1) 替换为 NaN
-    # Note: For some variables, -1 might be valid, but typically in LR0100 it means missing.
-    # 注意：对于某些变量，-1 可能是有效的，但在 LR0100 中通常表示缺失。
-    # df = df.replace(-1.0, float('nan'))
+    # Convert day and minute to DatetimeIndex / 将天和分钟转换为 DatetimeIndex
+    # Note: minute is 'minute after midnight' (0-1439)
+    try:
+        # Create base date for the month in UTC / 创建当月基础日期（UTC 时区）
+        base_date = pd.Timestamp(year=year, month=month, day=1, tz='UTC')
+        # Calculate time offset / 计算时间偏移
+        # Timestamps = base_date + (day-1) days + minute minutes
+        # 时间戳 = 基础日期 + (天数-1) + 分钟数
+        times = base_date + pd.to_timedelta(df['day'] - 1, unit='D') + \
+                pd.to_timedelta(df['minute'], unit='m')
+        df.index = times
+        df.index.name = 'time'
+    except Exception as e:
+        print(f"Error: Datetime conversion failed for {filename}: {e}")
+        # Continue with numeric index if conversion fails / 如果转换失败，继续使用数值索引
+
+    # Replace BSRN missing value indicators with NaN / 将 BSRN 缺失值标记替换为 NaN
+    # Missing codes per specification: -999, -99.9 / 规范定义的缺失值：-999, -99.9
+    for val in [-999.0, -99.9]:
+        df = df.replace(val, float('nan'))
+    
+    # Drop raw day/minute columns as they are now in the index / 删除原始天/列，因为它们现在在索引中
+    df = df.drop(columns=['day', 'minute'])
     
     return df
 
@@ -146,4 +174,4 @@ def read_bsrn_multiple_files(directory, extension="*.dat.gz"):
     if not dfs:
         return None
         
-    return pd.concat(dfs, ignore_index=True)
+    return pd.concat(dfs).sort_index()

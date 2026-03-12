@@ -39,7 +39,7 @@ def get_clearsky_ineichen(times, lat, lon, elev=0, linke_turbidity=3):
     location = pvlib.location.Location(lat, lon, altitude=elev)
     clearsky = location.get_clearsky(times, model='ineichen', linke_turbidity=linke_turbidity)
     
-    # Rename columns to match AGENT.md standards / 重命名列以符合 AGENT.md 标准
+    # Rename columns to match SKILL.md standards / 重命名列以符合 SKILL.md 标准
     clearsky = clearsky.rename(columns={
         'ghi': 'ghi_clear',
         'dni': 'bni_clear',
