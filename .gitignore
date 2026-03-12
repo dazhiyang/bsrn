@@ -22,6 +22,9 @@ conda-env/
 
 # Data and Notebooks
 data/*
+!data/*.py
+!data/QIQ/
+!data/QIQ/*
 !data/sample_bsrn_file.001
 notebooks/.ipynb_checkpoints/
 *.log
