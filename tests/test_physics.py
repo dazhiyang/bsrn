@@ -12,8 +12,12 @@ import numpy as np
 # Ensure 'src' is in path / 确保 'src' 在路径中
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-from bsrn.io.readers import read_bsrn_station_to_archive
 from bsrn.physics.clearsky import add_clearsky_columns
+
+# **Users can change these variables to their own directory / 用户可以根据自己的情况更改目录**
+# Path to a sample file and directory for testing
+# 用于测试的示例文件和目录路径
+SAMPLE_FILE = "/Volumes/Macintosh Research/Data/bsrn-qc/data/QIQ/qiq0124.dat.gz"
 
 class TestBSRNPhysics(unittest.TestCase):
     """
@@ -22,7 +26,7 @@ class TestBSRNPhysics(unittest.TestCase):
     """
 
     def setUp(self):
-        self.sample_file = "/Volumes/Macintosh Research/Data/bsrn-qc/data/QIQ/qiq0124.dat.gz"
+        self.sample_file = SAMPLE_FILE
 
     def test_add_clearsky(self):
         """

@@ -12,6 +12,12 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "s
 
 from bsrn.io.readers import read_bsrn_station_to_archive, read_bsrn_multiple_files
 
+# **Users can change these variables to their own directory / 用户可以根据自己的情况更改目录**
+# Path to a sample file and directory for testing
+# 用于测试的示例文件和目录路径
+DATA_DIR = "/Volumes/Macintosh Research/Data/bsrn-qc/data/QIQ"
+SAMPLE_FILE = os.path.join(DATA_DIR, "qiq0124.dat.gz")
+
 class TestBSRNReaders(unittest.TestCase):
     """
     Test suite for BSRN file readers.
@@ -19,10 +25,8 @@ class TestBSRNReaders(unittest.TestCase):
     """
 
     def setUp(self):
-        # Path to a sample file and directory for testing
-        # 用于测试的示例文件和目录路径
-        self.data_dir = "/Volumes/Macintosh Research/Data/bsrn-qc/data/QIQ"
-        self.sample_file = os.path.join(self.data_dir, "qiq0124.dat.gz")
+        self.data_dir = DATA_DIR
+        self.sample_file = SAMPLE_FILE
 
     def test_read_lr0100(self):
         """

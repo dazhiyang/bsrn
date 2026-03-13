@@ -102,3 +102,4 @@ def function_name(param):
 - **Line Size**: Default line size **MUST** be set to 0.3 for all plots.
 - **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
 - **Size**: **MUST** set text size to 7pt and figure width to 160mm (for standard journal column width).
+- **Format**: All plots **MUST** be output in **PDF** format to ensure high-quality vector graphics.

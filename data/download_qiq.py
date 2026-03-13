@@ -12,10 +12,12 @@ except ImportError as e:
     print("Ensure all dependencies (pandas, etc.) are installed and you are running from the project root.")
     sys.exit(1)
 
-# --- Configuration / 配置 ---
-USERNAME = "your_username"  # Replace with your BSRN FTP username / 替换为您的 BSRN FTP 用户名
-PASSWORD = "your_password"  # Replace with your BSRN FTP password / 替换为您的 BSRN FTP 密码
-STATION = "QIQ"
+# Users can change these variables to their own directory / 用户可以根据自己的情况更改目录
+# --- CONFIGURATION ---
+BSRN_USER = "your_username" # Replace with your BSRN FTP username / 替换为您的 BSRN FTP 用户名
+BSRN_PASSWORD = "your_password"  # Replace with your BSRN FTP password / 替换为您的 BSRN FTP 密码
+
+STATION = "QIQ" # Station abbreviation / 站点缩写
 YEAR = 2024  # Now supports 4-digit integers / 现在支持 4 位整数
 LOCAL_DIR = os.path.join(os.path.dirname(__file__), "QIQ")
 
