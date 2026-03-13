@@ -32,16 +32,16 @@ def main():
     print(f"Initiating BSRN FTP search for: {STATIONS_TO_CHECK}")
     
     try:
+        # Save the plot
+        output_file = "bsrn_availability_heatmap.pdf"
+        
         fig = plot_bsrn_availability(
             stations=STATIONS_TO_CHECK,
             username=BSRN_USER,
             password=BSRN_PASSWORD,
-            start_year=START_YEAR
+            start_year=START_YEAR,
+            output_file=output_file
         )
-        
-        # Save the plot
-        output_file = "bsrn_availability_heatmap.png"
-        fig.save(output_file, dpi=300)
         print(f"Successfully generated heatmap: {output_file}")
         
     except Exception as e:

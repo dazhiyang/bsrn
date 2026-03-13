@@ -17,7 +17,7 @@ from plotnine import (
 from bsrn.io.retrieval import get_bsrn_file_inventory
 
 
-def plot_bsrn_availability(stations, username, password, start_year=1992, end_year=None):
+def plot_bsrn_availability(stations, username, password, start_year=1992, end_year=None, output_file=None):
     """
     Unified function to plot bsrn file availability from ftp.
     统一功能，用于绘制FTP中的BSRN文件可用性。
@@ -39,6 +39,9 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
     end_year : int, optional
         year to end the visualization. If not specified, the current year is used.
         可视化结束的年份。如果未指定，则使用当前年份。
+    output_file : str, optional
+        Path to the output file (e.g., 'availability.pdf').
+        输出文件的路径（例如 'availability.pdf'）。
 
     Returns
     -------
@@ -160,4 +163,7 @@ def plot_bsrn_availability(stations, username, password, start_year=1992, end_ye
         axis_text_x=element_text(rotation=45, hjust=1)
     )
 
+    if output_file:
+        p.save(output_file, dpi=300)
+        
     return p

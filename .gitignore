@@ -31,3 +31,4 @@ notebooks/.ipynb_checkpoints/
 
 # Miscellaneous
 .DS_Store
+*.pdf

@@ -36,6 +36,12 @@ def plot_bsrn_timeseries_booklet(file_path, output_file, station_code=None, appl
     apply_qc : bool, default False
         If True, applies physically possible limits (PPL) and masks bad data.
         如果为 True，则应用物理可能极限 (PPL) 并屏蔽错误数据。
+
+    Returns
+    -------
+    None
+        The function saves the plots to the specified PDF file.
+        该函数将图表保存到指定的 PDF 文件中。
     """
     # 0. Load Data / 加载数据
     plot_df = read_bsrn_station_to_archive(file_path)
@@ -80,7 +86,7 @@ def plot_bsrn_timeseries_booklet(file_path, output_file, station_code=None, appl
 
     # 4. Figure Setup / 图表设置
     width_inch = 160 / 25.4
-    height_inch = width_inch * 0.8  # Taller for 2x3 grid / 2x3 网格需要更高
+    height_inch = width_inch * 1.0  # Taller for 3x3 grid / 3x3 网格需要更高
     
     plot_df = plot_df.sort_index()
     measured_color = '#E69F00' # Wong Orange
@@ -97,48 +103,63 @@ def plot_bsrn_timeseries_booklet(file_path, output_file, station_code=None, appl
             formatted_date = date.strftime("%Y %b %d")
             day_zenith = zenith.loc[day_df.index]
             
-            # --- Prepare Data for Main Plots (Row 1) ---
+            # --- Prepare Data for Main Plots (GHI, BNI, DHI, LWD) ---
+            main_vars = ['ghi', 'bni', 'dhi']
+            if 'lwd' in day_df.columns: main_vars.append('lwd')
+            clear_vars = ['ghi_clear', 'bni_clear', 'dhi_clear']
+            if 'lwd_clear' in day_df.columns: clear_vars.append('lwd_clear')
+            
             day_main_measured = day_df.reset_index().melt(
                 id_vars=['time'], 
-                value_vars=['ghi', 'bni', 'dhi'], 
+                value_vars=main_vars, 
                 var_name='parameter', value_name='measured'
             )
             day_main_clear = day_df.reset_index().melt(
                 id_vars=['time'], 
-                value_vars=['ghi_clear', 'bni_clear', 'dhi_clear'], 
+                value_vars=clear_vars, 
                 var_name='parameter', value_name='clearsky'
             )
             day_main_measured['parameter'] = day_main_measured['parameter'].str.upper()
             day_main_clear['parameter'] = day_main_clear['parameter'].str.replace('_clear', '').str.upper()
-            day_main = pd.merge(day_main_measured, day_main_clear, on=['time', 'parameter'])
+            day_main = pd.merge(day_main_measured, day_main_clear, on=['time', 'parameter'], how='left')
             
-            # --- Prepare Data for Diagnostic Plots (Row 2) ---
-            day_diag = day_df.reset_index().melt(
+            # --- Prepare Data for Diagnostic & Meteorological Plots ---
+            # Rearranged order: GHI-SUM, GHI/SUM, TEMP, RH, Pressure
+            
+            # Mask GHI/SUM ratio at night (zenith >= 90) / 夜间屏蔽 GHI/SUM 比率
+            day_df_diag = day_df.copy()
+            day_df_diag.loc[day_zenith >= 90, 'gh_ratio'] = np.nan
+            
+            diag_vars = ['gh_diff', 'gh_ratio', 'temp', 'rh', 'pressure']
+            day_diag = day_df_diag.reset_index().melt(
                 id_vars=['time'], 
-                value_vars=['lwd', 'gh_ratio', 'gh_diff'], 
+                value_vars=diag_vars, 
                 var_name='parameter', value_name='value'
             )
             # Map names / 映射名称
-            name_map = {'lwd': 'LWD', 'gh_ratio': 'GHI/SUM', 'gh_diff': 'GHI-SUM'}
+            name_map = {
+                'gh_diff': 'GHI-SUM', 
+                'gh_ratio': 'GHI/SUM', 
+                'temp': 'TEMP',
+                'rh': 'RH',
+                'pressure': 'Pressure'
+            }
             day_diag['parameter'] = day_diag['parameter'].map(name_map)
             
-            # Combine all for faceting / 合并所有数据用于分面
-            # We use two separate plot objects combined or one with manual aesthetics?
-            # Easiest: facet all together, but some have ribbons and some don't.
-            # Using data-specific geoms in a single plot.
+            # Order categories / 设置类别顺序
+            all_params = ['GHI', 'BNI', 'DHI', 'GHI-SUM', 'GHI/SUM', 'LWD', 'TEMP', 'RH', 'Pressure']
+            day_main['parameter'] = pd.Categorical(day_main['parameter'], categories=all_params, ordered=True)
+            day_diag['parameter'] = pd.Categorical(day_diag['parameter'], categories=all_params, ordered=True)
             
-            all_params = ['GHI', 'BNI', 'DHI', 'LWD', 'GHI/SUM', 'GHI-SUM']
-            
-            # Thresholds for GHI/SUM / GHI/SUM 的阈值
-            # Envelope 0.08 (Z < 75) and 0.15 (Z > 75)
-            thresh_upper = np.where(day_zenith < 75, 1.08, 1.15)
-            thresh_lower = np.where(day_zenith < 75, 0.92, 0.85)
+            # Thresholds for GHI/SUM
             day_thresh = pd.DataFrame({
                 'time': day_df.index,
-                'upper': thresh_upper,
-                'lower': thresh_lower,
-                'parameter': 'GHI/SUM'
-            })
+                'upper': np.where(day_zenith < 75, 1.08, 1.15),
+                'lower': np.where(day_zenith < 75, 0.92, 0.85),
+                'parameter': pd.Categorical(['GHI/SUM']*len(day_df.index), categories=all_params, ordered=True)
+            }, index=day_df.index)
+            # Mask thresholds at night as well for clarity
+            day_thresh.loc[day_zenith >= 90, ['upper', 'lower']] = np.nan
 
             title = f"{formatted_date}"
             if station_code: title = f"{station_code} - {title}"
@@ -150,14 +171,14 @@ def plot_bsrn_timeseries_booklet(file_path, output_file, station_code=None, appl
                 geom_ribbon(aes(ymin=0, ymax='clearsky'), fill=ribbon_color, alpha=0.25) +
                 geom_line(aes(y='clearsky'), color=clearsky_color, size=0.3) +
                 geom_line(aes(y='measured'), color=measured_color, size=0.3) +
-                # Row 2: Diagnostics
+                # Diagnostic & Meteo Plots
                 geom_line(data=day_diag, mapping=aes(y='value'), color=measured_color, size=0.3) +
-                # Row 2: Ratio Envelopes
+                # Ratio Envelopes (Row 2, Column 2)
                 geom_line(data=day_thresh, mapping=aes(y='upper'), color='#999999', size=0.3, linetype='dashed') +
                 geom_line(data=day_thresh, mapping=aes(y='lower'), color='#999999', size=0.3, linetype='dashed') +
-                geom_hline(data=pd.DataFrame({'parameter': ['GHI/SUM'], 'y': [1.0]}), 
+                geom_hline(data=pd.DataFrame({'parameter': pd.Categorical(['GHI/SUM'], categories=all_params), 'y': [1.0]}), 
                            mapping=aes(yintercept='y'), color='#999999', size=0.2) +
-                facet_wrap('~parameter', nrow=2, ncol=3, scales='free_y') +
+                facet_wrap('~parameter', nrow=3, ncol=3, scales='free_y') +
                 labs(title=title, x="Time (UTC)", y="Value") +
                 theme_minimal() +
                 theme(

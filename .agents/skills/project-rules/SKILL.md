@@ -24,6 +24,8 @@ Code variables and documentation **MUST** strictly adhere to the following table
 | **GHIC** | `ghi_clear` | $G_{hc}$ | clear-sky GHI | 晴空水平总辐照度 |
 | **BNIC** | `bni_clear` | $B_{nc}$ | clear-sky BNI | 晴空法向直接辐照度 |
 | **DHIC** | `dhi_clear` | $D_{hc}$ | clear-sky DHI | 晴空水平散射辐照度 |
+| **LWDC** | `lwd_clear` | $L_{dc}$ | clear-sky LWD | 晴空下行长波辐射 |
+| **LWUC** | `lwu_clear` | $L_{uc}$ | clear-sky LWU | 晴空上行长波辐射 |
 | **BNIE** | `bni_extra` | $E_{0n}$ | extraterrestrial BNI | 地外法向辐照度 |
 | **GHIE** | `ghi_extra` | $E_{0}$ | extraterrestrial GHI | 地外水平辐照度 |
 | **SC** | `solar_constant` | $E_{\text{sc}}$ | solar constant | 太阳常数 |
@@ -81,6 +83,7 @@ def function_name(param):
 
 ### 4. Git Usage
 - **DO NOT** push to git unless explicitly instructed by the USER.
+- **MUST** exclude all PDF files (`*.pdf`) from Git to avoid bloat in the repository.
 
 ### 5. Visualization & Aesthetics
 - **Color Palettes**:
@@ -93,6 +96,7 @@ def function_name(param):
         6. `#F0E442` (Yellow)
         7. `#0072B2` (Blue)
     - **Continuous Variables**: **MUST** use the **Viridis** color palette (or equivalent perceptually uniform colormaps).
-- **Clear-sky Reference**: **MUST** be visualized with both a **line** and a **ribbon** (fill from 0 upwards). Both **MUST** use the same color from the Wong sequence (typically the 2nd color if compared to 1st observed), with `alpha=0.4` applied to the ribbon.
+- **Clear-sky Reference**: **MUST** be visualized with both a **line** and a **ribbon** (fill from 0 upwards). Both **MUST** use the same color from the Wong sequence (typically the 2nd color if compared to 1st observed), with `alpha=0.25` applied to the ribbon.
+- **Line Size**: Default line size **MUST** be set to 0.3 for all plots.
 - **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
 - **Size**: **MUST** set text size to 7pt and figure width to 160mm (for standard journal column width).
