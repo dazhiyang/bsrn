@@ -79,7 +79,9 @@ bsrn-qc/
 │       │   ├── erl.py            # Extremely rare limits (Level 2)
 │       │   ├── closure.py        # Internal consistency checks (Level 3)
 │       │   ├── k_index.py        # Radiometric index tests
-│       │   └── tracker.py        # Solar tracker status detection
+│       │   ├── diff_ratio.py     # Diffuse ratio checks
+│       │   ├── tracker.py        # Solar tracker status detection
+│       │   └── wrapper.py        # High-level QC pipeline
 │       ├── visualization/
 │       │   ├── availability.py   # File coverage heatmaps (plotnine)
 │       │   ├── qc_table.py       # QC result tables
@@ -92,10 +94,14 @@ bsrn-qc/
 │           └── separation.py     # Solar radiation separation (Engerer2, Yang4)
 ├── tests/
 │   ├── test_io.py
-│   ├── test_qc.py
 │   ├── test_physics.py
-│   └── test_visualization.py
+│   ├── test_visualization.py
+│   └── test_modeling.py
+├── notebooks/
+│   └── qc_demo.ipynb             # QC workflow demo
 └── data/
+    ├── download_qiq.py           # Script to download QIQ station data
+    ├── retrive_Linke.py          # Script to retrieve Linke turbidity data
     └── QIQ/                      # Sample data for station QIQ
 ```
 
