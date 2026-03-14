@@ -11,6 +11,7 @@ import bsrn.qc.closure as closure
 import bsrn.qc.k_index as k_index
 import bsrn.qc.tracker as tracker
 
+
 def get_daily_stats(df, lat, lon, elev):
     """
     Calculate daily QC statistics and sunshine duration.
@@ -22,14 +23,14 @@ def get_daily_stats(df, lat, lon, elev):
         BSRN data archive.
         BSRN 数据存档。
     lat : float
-        Latitude in decimal degrees.
-        十进制度数表示的纬度。
+        Latitude. [degrees]
+        纬度。[度]
     lon : float
-        Longitude in decimal degrees.
-        十进制度数表示的经度。
+        Longitude. [degrees]
+        经度。[度]
     elev : float
-        Elevation in meters.
-        海拔高度，单位米。
+        Elevation. [m]
+        海拔。[米]
 
     Returns
     -------
@@ -41,10 +42,11 @@ def get_daily_stats(df, lat, lon, elev):
     solpos = geometry.get_solar_position(df.index, lat, lon, elev)
     zenith = solpos["zenith"]
     bni_extra = geometry.get_bni_extra(df.index)
+    ghi_extra = geometry.get_ghi_extra(df.index, zenith)
 
-    # Sunshine Duration (h) / 日照时数 (h)
-    # ACT: BNI > 120 W/m² / 实际：BNI > 120 W/m²
-    # MAX: Zenith < 90 / 最大：天顶角 < 90
+    # Sunshine duration (h) / 日照时数 (h)
+    # ACT: BNI > 120 W/m^2 / 实际：BNI > 120 W/m^2
+    # MAX: Zenith < 90 / 最大：太阳天顶角 < 90
     df['is_sunshine'] = (df['bni'] > 120).astype(int)
     df['is_daylight'] = (zenith < 90).astype(int)
     
@@ -60,15 +62,15 @@ def get_daily_stats(df, lat, lon, elev):
         'LWD_PPL': ~ppl.lwd_ppl_test(df["lwd"]),
         'LWD_ERL': ~erl.lwd_erl_test(df["lwd"]),
         # Combined L3 groups / 合并的 3 级分组
-        'CMP_CLO': (~closure.closure_low_sza_test(df["ghi"], df["bni"], df["dhi"], zenith)) |
-                  (~closure.closure_high_sza_test(df["ghi"], df["bni"], df["dhi"], zenith)),
-        'CMP_DIF': (~k_index.k_low_sza_test(df["ghi"], df["dhi"], zenith)) |
-                  (~k_index.k_high_sza_test(df["ghi"], df["dhi"], zenith)),
-        'CMP_K': (~k_index.kb_kt_test(df["ghi"], df["bni"], bni_extra, zenith)) |
-                 (~k_index.k_kt_combined_test(df["ghi"], df["dhi"], bni_extra, zenith)) |
-                 (~k_index.kb_limit_test(df["bni"], bni_extra, elev, df["ghi"])) |
-                 (~k_index.kt_limit_test(df["ghi"], bni_extra, zenith)),
-        'TRACKER': ~tracker.tracker_off_test(df["ghi"], df["bni"], zenith, ghi_extra=bni_extra)
+        'CMP_CLO': ((~closure.closure_low_sza_test(df["ghi"], df["bni"], df["dhi"], zenith)) |
+                    (~closure.closure_high_sza_test(df["ghi"], df["bni"], df["dhi"], zenith))),
+        'CMP_DIF': ((~k_index.k_low_sza_test(df["ghi"], df["dhi"], zenith)) |
+                    (~k_index.k_high_sza_test(df["ghi"], df["dhi"], zenith))),
+        'CMP_K': ((~k_index.kb_kt_test(df["ghi"], df["bni"], bni_extra, zenith)) |
+                  (~k_index.k_kt_combined_test(df["ghi"], df["dhi"], bni_extra, zenith)) |
+                  (~k_index.kb_limit_test(df["bni"], bni_extra, elev, df["ghi"])) |
+                  (~k_index.kt_limit_test(df["ghi"], bni_extra, zenith))),
+        'TRACKER': ~tracker.tracker_off_test(df["ghi"], df["bni"], zenith, ghi_extra=ghi_extra)
     }
     
     for name, flags in tests.items():

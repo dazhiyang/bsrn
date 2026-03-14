@@ -53,9 +53,11 @@ Code variables and documentation **MUST** strictly adhere to the following table
     # 计算地外水平辐照度
     ```
 
+
 ### 2. Docstring Structure
 - **MUST** use NumPy/SciPy style with bilingual descriptions.
 - **MUST** include both English and Chinese in the summary and parameter descriptions.
+- **MUST** include a `References` section at the end of the docstring for functions based on literature.
 
 ```python
 def function_name(param):
@@ -67,28 +69,37 @@ def function_name(param):
     ----------
     param : type
         English description.
-        中文描述。
+        中文描述集。
 
     Returns
     -------
     result : type
         English description.
         中文描述。
+
+    References
+    ----------
+    .. [1] Author, A. (Year). Title. Journal, Vol(Issue), Pages.
     """
 ```
 
-### 3. Naming & Consistency
+### 3. Citations
+- **MUST** follow **APA style** for all citations (e.g. Author, A. (Year). Title. Journal, Vol(Issue), Pages).
+- **MUST** use the reStructuredText citation format (`.. [1]`) within the docstring's `References` section.
+- **MUST** use sentence case for scientific paper titles in references.
+
+### 4. Naming & Consistency
 - **DO NOT** use generic terms like "Direct" or "Global" in isolation.
 - **MUST** use LaTeX symbols ($G_h, B_n$, etc.) in READMEs and technical docs.
 - **DO NOT** capitalize the long form of abbreviations (e.g., use "global horizontal irradiance").
 - **MUST** limit line length to a maximum of 110 characters.
 - **MUST** use sentence case for scientific paper titles in references.
 
-### 4. Git Usage
+### 5. Git Usage
 - **DO NOT** push to git unless explicitly instructed by the USER.
 - **MUST** exclude all PDF files (`*.pdf`) from Git to avoid bloat in the repository.
 
-### 5. Visualization & Aesthetics
+### 6. Visualization & Aesthetics
 - **Color Palettes**:
     - **Discrete Variables**: **MUST** use the **Wong colorblind-friendly palette**. Colors **MUST** be used in this specific order based on the number of categories:
         1. `#E69F00` (Orange)

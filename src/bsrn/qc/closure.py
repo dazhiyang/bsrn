@@ -7,11 +7,6 @@ import numpy as np
 import pandas as pd
 
 
-"""
-Citations:
-[1] Long, Chuck N., and Yan Shi. "An automated quality assessment and control algorithm for surface radiation 
-measurements." Open Atmos. Sci. J 2.1 (2008): 23-37.
-"""
 def closure_low_sza_test(ghi, bni, dhi, zenith):
     r"""
     Check consistency between GHI, BNI, and DHI for low solar zenith angles ($Z \le 75^\circ$).
@@ -20,23 +15,29 @@ def closure_low_sza_test(ghi, bni, dhi, zenith):
     Parameters
     ----------
     ghi : numeric or Series
-        global horizontal irradiance ($G_h$) in W/m^2.
-        水平总辐照度 ($G_h$)，单位 W/m^2。
+        Global horizontal irradiance ($G_h$). [W/m^2]
+        水平总辐照度 ($G_h$)。[瓦/平方米]
     bni : numeric or Series
-        beam normal irradiance ($B_n$) in W/m^2.
-        法向直接辐照度 ($B_n$)，单位 W/m^2。
+        Beam normal irradiance ($B_n$). [W/m^2]
+        法向直接辐照度 ($B_n$)。[瓦/平方米]
     dhi : numeric or Series
-        diffuse horizontal irradiance ($D_h$) in W/m^2.
-        水平散射辐照度 ($D_h$)，单位 W/m^2。
+        Diffuse horizontal irradiance ($D_h$). [W/m^2]
+        水平散射辐照度 ($D_h$)。[瓦/平方米]
     zenith : numeric or Series
-        solar zenith angle ($Z$) in degrees.
-        太阳天顶角 ($Z$)，单位为度。
+        Solar zenith angle ($Z$). [degrees]
+        太阳天顶角 ($Z$)。[度]
 
     Returns
     -------
     flags : Series or ndarray
-        Boolean flags where True indicates the test passed.
-        布尔标记，True 表示测试通过。
+        Boolean flags (True = Pass). [bool]
+        布尔标记（True = 通过）。[布尔值]
+
+    References
+    ----------
+    .. [1] Long, C. N., & Shi, Y. (2008). An automated quality assessment 
+       and control algorithm for surface radiation measurements. The Open 
+       Atmospheric Science Journal, 2(1), 23-37.
     """
     mu0 = np.cos(np.radians(zenith))
     
@@ -44,10 +45,11 @@ def closure_low_sza_test(ghi, bni, dhi, zenith):
     ghi_calc = bni * mu0 + dhi
     ghi_calc_safe = np.where(ghi_calc > 0, ghi_calc, np.nan)
     
-    # Condition / 条件: |GHI / (DNI * cos(SZA) + DIF) - 1| <= 0.08
+    # Condition: |GHI / (DNI * cos(SZA) + DIF) - 1| <= 0.08
+    # 条件: |GHI / (DNI * cos(SZA) + DIF) - 1| <= 0.08
     diff_ratio = np.abs(ghi / ghi_calc_safe - 1)
     
-    # Domain / 适用范围: Z <= 75 and GHI > 50
+    # Domain: Z <= 75 and GHI > 50 / 适用范围: Z <= 75 且 GHI > 50
     in_domain = (zenith <= 75) & (ghi > 50)
     condition_met = diff_ratio <= 0.08
     
@@ -57,11 +59,6 @@ def closure_low_sza_test(ghi, bni, dhi, zenith):
         return (not in_domain) or condition_met
 
 
-"""
-Citations:
-[1] Long, Chuck N., and Yan Shi. "An automated quality assessment and control algorithm for surface radiation 
-measurements." Open Atmos. Sci. J 2.1 (2008): 23-37.
-"""
 def closure_high_sza_test(ghi, bni, dhi, zenith):
     r"""
     Check consistency between GHI, BNI, and DHI for high solar zenith angles ($Z > 75^\circ$).
@@ -70,23 +67,29 @@ def closure_high_sza_test(ghi, bni, dhi, zenith):
     Parameters
     ----------
     ghi : numeric or Series
-        global horizontal irradiance ($G_h$) in W/m^2.
-        水平总辐照度 ($G_h$)，单位 W/m^2。
+        Global horizontal irradiance ($G_h$). [W/m^2]
+        水平总辐照度 ($G_h$)。[瓦/平方米]
     bni : numeric or Series
-        beam normal irradiance ($B_n$) in W/m^2.
-        法向直接辐照度 ($B_n$)，单位 W/m^2。
+        Beam normal irradiance ($B_n$). [W/m^2]
+        法向直接辐照度 ($B_n$)。[瓦/平方米]
     dhi : numeric or Series
-        diffuse horizontal irradiance ($D_h$) in W/m^2.
-        水平散射辐照度 ($D_h$)，单位 W/m^2。
+        Diffuse horizontal irradiance ($D_h$). [W/m^2]
+        水平散射辐照度 ($D_h$)。[瓦/平方米]
     zenith : numeric or Series
-        solar zenith angle ($Z$) in degrees.
-        太阳天顶角 ($Z$)，单位为度。
+        Solar zenith angle ($Z$). [degrees]
+        太阳天顶角 ($Z$)。[度]
 
     Returns
     -------
     flags : Series or ndarray
-        Boolean flags where True indicates the test passed.
-        布尔标记，True 表示测试通过。
+        Boolean flags (True = Pass). [bool]
+        布尔标记（True = 通过）。[布尔值]
+
+    References
+    ----------
+    .. [1] Long, C. N., & Shi, Y. (2008). An automated quality assessment 
+       and control algorithm for surface radiation measurements. The Open 
+       Atmospheric Science Journal, 2(1), 23-37.
     """
     mu0 = np.cos(np.radians(zenith))
     
@@ -94,10 +97,11 @@ def closure_high_sza_test(ghi, bni, dhi, zenith):
     ghi_calc = bni * mu0 + dhi
     ghi_calc_safe = np.where(ghi_calc > 0, ghi_calc, np.nan)
     
-    # Condition / 条件: |GHI / (DNI * cos(SZA) + DIF) - 1| <= 0.15
+    # Condition: |GHI / (DNI * cos(SZA) + DIF) - 1| <= 0.15
+    # 条件: |GHI / (DNI * cos(SZA) + DIF) - 1| <= 0.15
     diff_ratio = np.abs(ghi / ghi_calc_safe - 1)
     
-    # Domain / 适用范围: Z > 75 and GHI > 50
+    # Domain: Z > 75 and GHI > 50 / 适用范围: Z > 75 且 GHI > 50
     in_domain = (zenith > 75) & (ghi > 50)
     condition_met = diff_ratio <= 0.15
     

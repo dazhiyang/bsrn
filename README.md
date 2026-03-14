@@ -20,18 +20,18 @@ pip install git+https://github.com/dazhiyang/bsrn.git
 
 ```python
 from bsrn.io.retrieval import download_bsrn_stn, get_bsrn_file_inventory
-from bsrn.io.readers import read_bsrn_station_month
+from bsrn.io.readers import read_bsrn_station_to_archive
 from bsrn.physics.clearsky import add_clearsky_columns
 from bsrn.constants import BSRN_STATIONS
 
 # 1. See what data is available
-inventory = get_bsrn_file_inventory(username="your_user", password="your_pass")
+inventory = get_bsrn_file_inventory(["QIQ"], username="your_user", password="your_pass")
 
 # 2. Download data for a station
 download_bsrn_stn("QIQ", "data/QIQ", username="your_user", password="your_pass")
 
 # 3. Read a monthly file
-df = read_bsrn_station_month("data/QIQ/qiq0124.dat.gz")
+df = read_bsrn_station_to_archive("data/QIQ/qiq0124.dat.gz")
 
 # 4. Add clear-sky reference columns
 df = add_clearsky_columns(df, "QIQ")
@@ -81,9 +81,15 @@ bsrn-qc/
 │       │   ├── k_index.py        # Radiometric index tests
 │       │   └── tracker.py        # Solar tracker status detection
 │       ├── visualization/
-│       │   └── availability.py   # File coverage heatmaps (plotnine)
-│       └── utils/
-│           └── calculations.py   # Supporting math
+│       │   ├── availability.py   # File coverage heatmaps (plotnine)
+│       │   ├── qc_table.py       # QC result tables
+│       │   ├── separation.py     # Decomposition visualization
+│       │   └── timeseries.py     # Time series plots
+│       ├── utils/
+│       │   ├── calculations.py   # Supporting math
+│       │   └── quality.py        # Quality utilities
+│       └── modeling/
+│           └── separation.py     # Solar radiation separation (Engerer2, Yang4)
 ├── tests/
 │   ├── test_io.py
 │   ├── test_qc.py

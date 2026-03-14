@@ -1,23 +1,84 @@
 """
 BSRN Standards and Constants.
-Contains physical constants and station metadata.
 BSRN 标准和常量。
-包含物理常量和站点元数据。
+
+Contains physical constants, model parameters, and station metadata.
+包含物理常量、模型参数和站点元数据。
 """
 
 """
-Citations:
-[1] Gueymard, Christian A. "A reevaluation of the solar constant based on a 42-year total solar irradiance time 
-series and a reconciliation of spaceborne observations." Solar Energy 168 (2018): 2-9.
+Solar constant (SC) [$E_{\text{sc}}$]. [W/m^2]
+太阳常数 (SC) [$E_{\text{sc}}$]。[瓦/平方米]
+
+References
+----------
+Gueymard, C. A. (2018). A reevaluation of the solar constant based on a 
+42-year total solar irradiance time series and a reconciliation of 
+spaceborne observations. Solar Energy, 168, 2-9.
 """
-# solar constant (SC) in W/m^2 ($E_{\text{sc}}$) / 太阳常数 (SC) W/m^2 ($E_{\text{sc}}$)
 solar_constant = 1361.1
 
-# BSRN Calibration Constants (if any) / BSRN 校准常数（如果有）
-# ...
+"""
+Engerer2 separation model parameters (C, b0, b1, b2, b3, b4, b5).
+Engerer2 辐照分离模型参数 (C, b0, b1, b2, b3, b4, b5)。
 
-# Station Metadata: Mapping of station abbreviations to (lat, lon, elev) / 站点元数据：站点缩写到（纬度，经度，海拔）的映射
-# Note: These are example entries. / 注意：这些是示例条目。
+Mapping by averaging period [minutes].
+按平均时段 [分钟] 映射。
+
+References
+----------
+Bright, J. M., & Engerer, N. A. (2019). Engerer2: Global 
+re-parameterisation, update, and validation of an irradiance separation 
+model at different temporal resolutions. Journal of Renewable and 
+Sustainable Energy, 11(3), 033701.
+"""
+ENGERER2_PARAMS = {
+    1: (0.105620, -4.13320, 8.25780, 0.0100870, 0.000888010, -4.93020, 0.443780),
+    5: (0.0939360, -4.57710, 8.46410, 0.0100120, 0.00397500, -4.39210, 0.393310),
+    10: (0.0799650, -4.85390, 8.47640, 0.0188490, 0.00514970, -4.14570, 0.374660),
+    15: (0.0659720, -4.72110, 8.32940, 0.00954440, 0.00534930, -4.16900, 0.395260),
+    30: (0.0326750, -4.86810, 8.18670, 0.0158290, 0.00599220, -4.03040, 0.473710),
+    60: (-0.00975390, -5.31690, 8.50840, 0.0132410, 0.00743560, -3.03290, 0.564030),
+    1440: (0.327260, -9.43910, 17.1130, 0.137520, -0.0240990, 6.62570, 0.314190),
+}
+
+"""
+Yang4 separation model parameters.
+Yang4 辐照分离模型参数。
+
+Predictors: k_t, AST, zenith, dktc, k_de, k_d,60min.
+预测变量：k_t, AST, zenith, dktc, k_de, k_d,60min。
+
+References
+----------
+Yang, D., & Boland, J. (2019). Satellite-augmented diffuse solar 
+radiation separation models. Journal of Renewable and Sustainable Energy, 
+11(2), 023704.
+"""
+YANG4_PARAMS = (
+    0.0361,   # C (lower bound) / C (下限)
+    -0.5744,  # b0 (intercept) / b0 (截距)
+    4.3184,   # b1 (k_t) / b1 (晴朗指数)
+    -0.0011,  # b2 (AST) / b2 (地面太阳时)
+    0.0004,   # b3 (zenith) / b3 (太阳天顶角)
+    -4.7952,  # b4 (dktc) / b4 (晴空偏离度)
+    1.4414,   # b5 (k_de) / b5 (云增强分数)
+    -2.8396,  # b6 (k_d,60min) / b6 (小时平均散射分数)
+)
+
+"""
+Station Metadata: Mapping of station abbreviations to geographic info.
+站点元数据：站点缩写到地理信息的映射。
+
+Includes: name, latitude [degrees], longitude [degrees], elevation [m].
+包括：名称、纬度 [度]、经度 [度]、海拔 [米]。
+
+References
+----------
+Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN): 
+structure and data description (1992–2017). Earth System Science Data, 
+10(3), 1491-1501.
+"""
 BSRN_STATIONS = {
     "ABS": {"name": "Abashiri", "lat": 44.0178, "lon": 144.2797, "elev": 38.0, "status": "active", "kgc": "Dfb"},
     "ALE": {"name": "Alert", "lat": 82.49, "lon": -62.42, "elev": 127.0, "status": "closed", "kgc": "ET"},
@@ -96,10 +157,17 @@ BSRN_STATIONS = {
     "TOR": {"name": "Toravere", "lat": 58.2641, "lon": 26.4613, "elev": 70.0, "status": "active", "kgc": "Dfb"},
     "XIA": {"name": "Xianghe", "lat": 39.754, "lon": 116.962, "elev": 32.0, "status": "closed", "kgc": "Dwa"},
     "YUS": {"name": "Yushan Station", "lat": 23.4876, "lon": 120.9595, "elev": 3858.0, "status": "active", "kgc": "ET"},
-
 }
 
-# Linke Turbidity: Monthly values for BSRN stations / Linke 浑浊度：BSRN 站点的月度值
+"""
+Linke Turbidity: Monthly values for BSRN stations.
+Linke 浑浊度：BSRN 站点的月度值。
+
+References
+----------
+SoDA-PRO (2024). Linke Turbidity Factor. Retrieved from 
+https://www.soda-pro.com/help/general-knowledge/linke-turbidity-factor
+"""
 LINKE_TURBIDITY = {
     "ABS": {"Jan": 3.1, "Feb": 3.4, "Mar": 4.1, "Apr": 4.3, "May": 4.0, "Jun": 3.7, "Jul": 3.7, "Aug": 3.8, "Sep": 3.7, "Oct": 3.9, "Nov": 3.5, "Dec": 3.1},
     "ALE": {"Jan": 1.1, "Feb": 1.1, "Mar": 3.7, "Apr": 3.6, "May": 3.4, "Jun": 2.9, "Jul": 3.2, "Aug": 2.8, "Sep": 3.1, "Oct": 1.4, "Nov": 1.1, "Dec": 1.1},
@@ -180,7 +248,15 @@ LINKE_TURBIDITY = {
     "YUS": {"Jan": 2.7, "Feb": 2.8, "Mar": 3.4, "Apr": 3.3, "May": 3.1, "Jun": 2.7, "Jul": 2.4, "Aug": 2.6, "Sep": 2.9, "Oct": 3.0, "Nov": 2.7, "Dec": 2.5},
 }
 
-# Project defined Wong palette / 项目定义的 Wong 配色方案
+"""
+Wong colorblind-friendly palette.
+Wong 色盲友好配色方案。
+
+References
+----------
+Wong, B. (2011). Points of view: Color blindness. Nature Methods, 
+8(6), 441-441.
+"""
 WONG_PALETTE = [
     "#E69F00",  # Orange / 橙色
     "#56B4E9",  # Sky Blue / 天蓝色

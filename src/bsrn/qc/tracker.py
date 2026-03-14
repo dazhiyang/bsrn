@@ -7,11 +7,6 @@ import numpy as np
 import pandas as pd
 
 
-"""
-Citations:
-[1] Forstinger, Anne, et al. "Expert quality control of solar radiation ground data sets." SWC 2021: 
-ISES Solar World Congress. International Solar Energy Society, 2021.
-"""
 def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear=None, bni_clear=None):
     """
     Check if the solar tracker is off by comparing measured and clear-sky irradiances.
@@ -20,32 +15,38 @@ def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear
     Parameters
     ----------
     ghi : numeric or Series
-        measured global horizontal irradiance ($G_h$) in W/m^2.
-        测量的水平总辐照度 ($G_h$)，单位 W/m^2。
+        Measured global horizontal irradiance ($G_h$). [W/m^2]
+        测量的水平总辐照度 ($G_h$)。[瓦/平方米]
     bni : numeric or Series
-        measured beam normal irradiance ($B_n$) in W/m^2.
-        测量的法向直接辐照度 ($B_n$)，单位 W/m^2。
+        Measured beam normal irradiance ($B_n$). [W/m^2]
+        测量的法向直接辐照度 ($B_n$)。[瓦/平方米]
     zenith : numeric or Series
-        solar zenith angle ($Z$) in degrees.
-        太阳天顶角 ($Z$)，单位为度。
+        Solar zenith angle ($Z$). [degrees]
+        太阳天顶角 ($Z$)。[度]
     ghi_extra : numeric or Series, optional
-        extraterrestrial horizontal irradiance ($E_0$) in W/m^2. Used for default clear calculations.
-        地外水平辐照度 ($E_0$)，单位 W/m^2。用于默认的晴空计算。
+        Extraterrestrial horizontal irradiance ($E_0$). [W/m^2]
+        地外水平辐照度 ($E_0$)。[瓦/平方米]
     ghi_clear : numeric or Series, optional
-        reference clear-sky global horizontal irradiance ($G_{hc}$) in W/m^2.
-        参考晴空水平总辐照度 ($G_{hc}$)，单位 W/m^2。
+        Reference clear-sky global horizontal irradiance ($G_{hc}$). [W/m^2]
+        参考晴空水平总辐照度 ($G_{hc}$)。[瓦/平方米]
     dhi_clear : numeric or Series, optional
-        reference clear-sky diffuse horizontal irradiance ($D_{hc}$) in W/m^2.
-        参考晴空水平散射辐照度 ($D_{hc}$)，单位 W/m^2。
+        Reference clear-sky diffuse horizontal irradiance ($D_{hc}$). [W/m^2]
+        参考晴空水平散射辐照度 ($D_{hc}$)。[瓦/平方米]
     bni_clear : numeric or Series, optional
-        reference clear-sky beam normal irradiance ($B_{nc}$) in W/m^2.
-        参考晴空法向直接辐照度 ($B_{nc}$)，单位 W/m^2。
+        Reference clear-sky beam normal irradiance ($B_{nc}$). [W/m^2]
+        参考晴空法向直接辐照度 ($B_{nc}$)。[瓦/平方米]
 
     Returns
     -------
     flags : Series or ndarray
-        Boolean flags where True indicates the tracker is functioning correctly (not off).
-        布尔标记，True 表示跟踪器正常运行（未失准）。
+        Boolean flags (True = Pass). [bool]
+        布尔标记（True = 通过）。[布尔值]
+
+    References
+    ----------
+    .. [1] Forstinger, A., et al. (2021). Expert quality control of solar 
+       radiation ground data sets. In SWC 2021: ISES Solar World Congress. 
+       International Solar Energy Society.
     """
     mu0 = np.cos(np.radians(zenith))
     
@@ -64,14 +65,13 @@ def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear
         # BNIC ($B_{nc}$) = (GHIC - DHIC) / mu0 / 晴空法向直接辐照度参考值
         bni_clear = (ghi_clear - dhi_clear) / np.maximum(mu0, 0.01)
     
-    # Tracker-off Condition / 跟踪器失准条件:
-    # A sunny day where GHI measurement is high (close to clear-sky) but BNI is low / 晴天 GHI 高但 BNI 低
+    # Tracker-off condition: sunny day where GHI measurement is close to clear-sky but BNI is low
+    # 跟踪器失准条件: 晴天 GHI 接近晴空值但 BNI 远低于其参考值
     
-    # Conditions per reference image / 根据参考图的条件:
     # Term 1: (GHIC - GHI) / (GHIC + GHI) < 0.2 / 条件 1: GHI 接近晴空值
     term1 = (ghi_clear - ghi) / (ghi_clear + ghi)
     
-    # Term 2: (BNIC - BNI) / (BNIC + BNI) > 0.95 / 条件 2: BNI 远低于晴空值
+    # Term 2: (BNIC - BNI) / (BNIC + BNI) > 0.95 / 条件 2: BNI 远低于参考值
     term2 = (bni_clear - bni) / (bni_clear + bni)
     
     # Tracker is off if SZA < 85 / 如果天顶角 < 85 则判断跟踪器失准

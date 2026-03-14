@@ -1,14 +1,14 @@
 """
 bsrn file readers.
-Handles .001, .002, ... and other archive formats.
 BSRN 文件读取模块。
+
+Handles .001, .002, ... and other archive formats.
 处理 .001, .002, ... 等存档格式。
 """
 
-import pandas as pd
 import gzip
-import io
 import os
+import pandas as pd
 
 
 def read_bsrn_station_to_archive(file_path):
@@ -25,8 +25,14 @@ def read_bsrn_station_to_archive(file_path):
     Returns
     -------
     df : pd.DataFrame or None
-        Parsed data with columns: day_number, minute_number, ghi, bni, dhi, lwd, temp, rh, pressure.
-        解析后的数据，包含列：day_number, minute_number, ghi, bni, dhi, lwd, temp, rh, pressure。
+        Parsed data with columns: ghi, bni, dhi, lwd [W/m^2], temp [C], rh [%], pressure [hPa].
+        解析后的数据，列包含：ghi, bni, dhi, lwd [瓦/平方米], temp [摄氏度], rh [%], pressure [百帕]。
+
+    References
+    ----------
+    .. [1] Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN): 
+       structure and data description (1992–2017). Earth System Science Data, 
+       10(3), 1491-1501.
     """
     if not os.path.exists(file_path):
         print(f"Error: File not found: {file_path}")
@@ -132,7 +138,7 @@ def read_bsrn_station_to_archive(file_path):
     for val in [-999.0, -99.9]:
         df = df.replace(val, float('nan'))
     
-    # Drop raw day/minute columns as they are now in the index / 删除原始天/列，因为它们现在在索引中
+    # Drop raw day/minute columns as they are now in the index / 删除原始天/分钟列，因为它们现在在索引中
     df = df.drop(columns=['day', 'minute'])
     
     return df
@@ -155,8 +161,8 @@ def read_bsrn_multiple_files(directory, extension="*.dat.gz"):
     Returns
     -------
     df : pd.DataFrame or None
-        Concatenated data.
-        合并后的数据。
+        Concatenated data with columns: ghi, bni, dhi, lwd [W/m^2], temp [C], rh [%], pressure [hPa].
+        合并后的数据，列包含：ghi, bni, dhi, lwd [瓦/平方米], temp [摄氏度], rh [%], pressure [百帕]。
     """
     from glob import glob
     # Collect files matching the pattern / 获取匹配模式的文件

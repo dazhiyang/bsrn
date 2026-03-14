@@ -1,13 +1,14 @@
 """
 bsrn data retrieval module.
-Handles FTP connections and automated downloads.
 BSRN 数据获取模块。
+
+Handles FTP connections and automated downloads.
 处理 FTP 连接并进行自动下载。
 """
 
-from ftplib import FTP
 import os
 import time
+from ftplib import FTP
 
 
 def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"):
@@ -35,6 +36,12 @@ def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"
     inventory : dict
         Mapping of station abbreviations to lists of filenames.
         站点缩写到文件名列表的映射。
+
+    References
+    ----------
+    .. [1] Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN): 
+       structure and data description (1992–2017). Earth System Science Data, 
+       10(3), 1491-1501.
     """
     inventory = {}
     try:
@@ -75,7 +82,6 @@ def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"
     except Exception as e:
         print(f"BSRN FTP: Major Connection Error: {e}")
     return inventory
-
 
 
 def download_bsrn_single(station, year, month, local_dir, username, password, host="ftp.bsrn.awi.de"):
@@ -225,8 +231,8 @@ def download_bsrn_files(filenames, local_dir, username, password, host="ftp.bsrn
     Returns
     -------
     downloaded_paths : list
-        List of paths to the downloaded files. Entries are None if a file failed to download.
-        已下载文件的路径列表。如果文件下载失败，则条目为 None。
+        List of paths to the downloaded files.
+        已下载文件的路径列表。
     """
     os.makedirs(local_dir, exist_ok=True)
     downloaded_paths = []
