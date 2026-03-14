@@ -273,19 +273,33 @@ def brutsaert_model(temp_c, rh):
     
     return lwd_clear
 
-def add_clearsky_columns(df, station_code, model="ineichen"):
+def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None,
+                        model="ineichen"):
     """
     Adds clear-sky radiation columns to a DataFrame based on its DatetimeIndex.
     根据 DatetimeIndex 向 DataFrame 添加晴空辐射列。
+
+    Location can be given by BSRN station code or by explicit lat/lon/elev
+    (e.g. for non-BSRN stations), consistent with the QC wrapper metadata pattern.
+    位置可由 BSRN 站点代码指定，或由显式的 lat/lon/elev 指定（如非 BSRN 站点），与 QC 包装的元数据约定一致。
 
     Parameters
     ----------
     df : pd.DataFrame
         Input data with pd.DatetimeIndex.
         包含 DatetimeIndex 的输入数据。
-    station_code : str
-        BSRN station abbreviation. [e.g., 'QIQ']
-        BSRN 站点缩写。[例如 'QIQ']
+    station_code : str, optional
+        BSRN station abbreviation. [e.g. 'QIQ'] Used if lat/lon/elev not provided.
+        BSRN 站点缩写。[例如 'QIQ']。未提供 lat/lon/elev 时使用。
+    lat : float, optional
+        Latitude. [degrees] Required for non-BSRN stations if station_code omitted.
+        纬度。[度]。非 BSRN 站点且未提供 station_code 时必填。
+    lon : float, optional
+        Longitude. [degrees] Required for non-BSRN stations if station_code omitted.
+        经度。[度]。非 BSRN 站点且未提供 station_code 时必填。
+    elev : float, optional
+        Elevation. [m] Required for non-BSRN stations if station_code omitted.
+        海拔。[米]。非 BSRN 站点且未提供 station_code 时必填。
     model : str, default 'ineichen'
         Clear-sky model to use. ['ineichen', 'mcclear', or 'tj']
         使用的晴空模型。[ 'ineichen'、'mcclear' 或 'tj']
@@ -295,13 +309,31 @@ def add_clearsky_columns(df, station_code, model="ineichen"):
     df : pd.DataFrame
         DataFrame with added _clear columns.
         增加了 _clear 列的 DataFrame。
-    """
-    if station_code not in BSRN_STATIONS:
-        print(f"Error: Station {station_code} not found in BSRN_STATIONS.")
-        return df
 
-    meta = BSRN_STATIONS[station_code]
-    lat, lon, elev = meta["lat"], meta["lon"], meta["elev"]
+    Raises
+    ------
+    ValueError
+        If neither a valid station_code nor complete (lat, lon, elev) is provided.
+        若既未提供有效 station_code 也未提供完整的 (lat, lon, elev)。
+    """
+    # Resolve metadata: explicit lat/lon/elev or BSRN lookup (same pattern as QC wrapper)
+    if lat is not None and lon is not None and elev is not None:
+        pass  # use provided coordinates
+    elif station_code is not None and station_code in BSRN_STATIONS:
+        meta = BSRN_STATIONS[station_code]
+        lat, lon, elev = meta["lat"], meta["lon"], meta["elev"]
+    elif station_code is not None:
+        raise ValueError(
+            f"Station '{station_code}' not found in BSRN registry. "
+            "For non-BSRN stations, provide 'lat', 'lon', and 'elev' explicitly. / "
+            f"在 BSRN 注册表中未找到站点 '{station_code}'。非 BSRN 站点请显式提供 lat、lon、elev。"
+        )
+    else:
+        raise ValueError(
+            "Insufficient metadata. Provide a valid BSRN 'station_code' or "
+            "explicit 'lat', 'lon', and 'elev'. / "
+            "元数据不足。请提供有效的 BSRN 站点代码或显式的 lat、lon、elev。"
+        )
     
     # Get solar geometry / 获取太阳几何参数
     solpos = geometry.get_solar_position(df.index, lat, lon, elev)
@@ -311,10 +343,11 @@ def add_clearsky_columns(df, station_code, model="ineichen"):
     
     if model.lower() == "ineichen":
         # Handle monthly LT values / 处理月度 LT 值
-        # Broadcast LT based on index months / 根据索引月份广播 LT 值
-        lt_mapping = LINKE_TURBIDITY.get(station_code, {m: 3.0 for m in ["Jan", "Feb"]})
-        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", 
+        # Broadcast LT based on index months; default LT=3.0 for all months if no station / 无站点时默认 LT=3.0
+        month_names = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
                        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+        default_lt = {m: 3.0 for m in month_names}
+        lt_mapping = LINKE_TURBIDITY.get(station_code, default_lt)
         
         # Map months to LT / 将月份映射到 LT
         months = df.index.month - 1
@@ -333,7 +366,10 @@ def add_clearsky_columns(df, station_code, model="ineichen"):
     elif model.lower() == "mcclear":
         # Placeholder for McClear model / McClear 模型占位符
         print("Warning: McClear model not yet implemented. Falling back to Ineichen.")
-        return add_clearsky_columns(df, station_code, model="ineichen")
+        return add_clearsky_columns(
+            df, station_code=station_code, lat=lat, lon=lon, elev=elev,
+            model="ineichen"
+        )
     
     elif model.lower() in ("threlkeld_jordan", "tj"):
         # Threlkeld-Jordan (GHI only; for engerer2) / Threlkeld-Jordan（仅 GHI；用于 engerer2）

@@ -30,9 +30,10 @@ Code variables and documentation **MUST** strictly adhere to the following table
 | **GHIE** | `ghi_extra` | $E_{0}$ | extraterrestrial GHI | 地外水平辐照度 |
 | **SC** | `solar_constant` | $E_{\text{sc}}$ | solar constant | 太阳常数 |
 | **CSI** | `kappa` | $\kappa$ | clear-sky index | 晴空指数 |
-| **k_t** | `k_t` | $k_t$ | clearness index | 晴朗指数 |
-| **k_b** | `k_b` | $k_b$ | beam transmittance | 直射透射率 |
-| **k_d** | `k_d` | $k_d$ | diffuse transmittance | 散射透射率 |
+| **k_t** | `kt` | $k_t$ | clearness index | 晴朗指数 |
+| **K_t** (daily) | `Kt` | $K_t$ | daily clearness index | 日晴朗指数 |
+| **k_b** | `kb` | $k_b$ | beam transmittance | 直射透射率 |
+| **k_d** | `kd` | $k_d$ | diffuse transmittance | 散射透射率 |
 | **k** | `k` | $k$ | diffuse fraction | 散射分数 |
 | **TMP** | `temp` | $T$ | air temperature | 空气温度 |
 | **RH** | `rh` | $RH$ | relative humidity | 相对湿度 |
@@ -116,17 +117,42 @@ def function_name(param):
 - **MUST** use sentence case for scientific paper titles in references.
 
 ### 4. Naming & Consistency
+- **MUST** use the exact **Code Name** from the Radiometric Parameters table above for **all** local variables, function parameters, and intermediate results. The table is the single source of truth.
+- **DO NOT** invent synonyms or pvlib-style aliases. Common mistakes and their **mandatory** replacements:
+
+| Forbidden Name | Correct Code Name | Why |
+| :--- | :--- | :--- |
+| `cos_zenith`, `cos_z`, `cosz` | `mu0` | Table row **cosSZA** |
+| `i0h`, `I0h`, `i0`, `etr_h` | `ghi_extra` | Table row **GHIE** |
+| `dni_extra`, `etr_n`, `I0n` | `bni_extra` | Table row **BNIE** |
+| `solar_zenith`, `sza`, `sz` | `zenith` | Table row **SZA** |
+| `solar_azimuth`, `saa` | `azimuth` | Table row **SAA** |
+| `K_t`, `k_t`, `clearness` (hourly) | `kt` | Table row **k_t** |
+| `K_t_daily`, `K_t` (daily variable) | `Kt` | Table row **K_t** (daily) |
+| `df` (diffuse fraction) | `k` | Table row **k** |
+
 - **DO NOT** use generic terms like "Direct" or "Global" in isolation.
 - **MUST** use LaTeX symbols ($G_h, B_n$, etc.) in READMEs and technical docs.
 - **DO NOT** capitalize the long form of abbreviations (e.g., use "global horizontal irradiance").
 - **MUST** limit line length to a maximum of 110 characters.
 - **MUST** use sentence case for scientific paper titles in references.
 
-### 5. Git Usage
+### 5. Function Signature Style
+- **MUST** use compact signatures: required parameters first, then optional parameters with defaults on the same line.
+- If the signature exceeds the line length limit (110 characters), break after the opening parenthesis and indent continuation lines with 4 spaces; align optional parameters or use a single continuation line.
+- **DO NOT** put one parameter per line with trailing comma unless the list is very long or each parameter has a long default.
+- Example (short): `def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None, model="ineichen"):`
+- Example (wrapped): `def plot_k_vs_kt(df, model, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_col=None,\n                 min_ghi=50.0, output_file=None, title=None):`
+
+### 6. Output Directory
+- All generated plots and figures **MUST** be saved to the project root directory.
+- **DO NOT** save output files into `tests/`, `src/`, or other source directories.
+
+### 7. Git Usage
 - **DO NOT** push to git unless explicitly instructed by the USER.
 - **MUST** exclude all PDF files (`*.pdf`) from Git to avoid bloat in the repository.
 
-### 6. Visualization & Aesthetics
+### 8. Visualization & Aesthetics
 - **Color Palettes**:
     - **Discrete Variables**: **MUST** use the **Wong colorblind-friendly palette**. Colors **MUST** be used in this specific order based on the number of categories:
         1. `#E69F00` (Orange)

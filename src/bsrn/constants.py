@@ -46,8 +46,8 @@ ENGERER2_PARAMS = {
 Yang4 separation model parameters.
 Yang4 辐照分离模型参数。
 
-Predictors: k_t, AST, zenith, dktc, k_de, k_d,60min.
-预测变量：k_t, AST, zenith, dktc, k_de, k_d,60min。
+Predictors: kt, AST, zenith, dktc, k_de, k_60min.
+预测变量：kt, AST, zenith, dktc, k_de, k_60min。
 
 References
 ----------
@@ -58,12 +58,12 @@ radiation separation models. Journal of Renewable and Sustainable Energy,
 YANG4_PARAMS = (
     0.0361,   # C (lower bound) / C (下限)
     -0.5744,  # b0 (intercept) / b0 (截距)
-    4.3184,   # b1 (k_t) / b1 (晴朗指数)
+    4.3184,   # b1 (kt) / b1 (晴朗指数)
     -0.0011,  # b2 (AST) / b2 (地面太阳时)
     0.0004,   # b3 (zenith) / b3 (太阳天顶角)
     -4.7952,  # b4 (dktc) / b4 (晴空偏离度)
     1.4414,   # b5 (k_de) / b5 (云增强分数)
-    -2.8396,  # b6 (k_d,60min) / b6 (小时平均散射分数)
+    -2.8396,  # b6 (k_60min) / b6 (60 分钟平均散射分数)
 )
 
 """

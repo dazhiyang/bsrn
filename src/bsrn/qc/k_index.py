@@ -6,7 +6,6 @@ BSRN 3 级（相互比较）检查 - 辐射指数测试 (k-测试)。
 import numpy as np
 import pandas as pd
 
-# some random comments here for git testing in curosr
 def kb_kt_test(ghi, bni, bni_extra, zenith):
     """
     Check if beam transmittance ($k_b$) is less than clearness index ($k_t$).
