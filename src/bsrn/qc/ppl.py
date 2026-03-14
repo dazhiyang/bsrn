@@ -5,6 +5,8 @@ BSRN 1 级（物理可能）检查。
 
 import numpy as np
 import pandas as pd
+from bsrn.physics import geometry
+from bsrn.constants import BSRN_STATIONS
 
 
 def ghi_ppl_test(ghi, zenith, bni_extra):
@@ -146,3 +148,54 @@ def lwd_ppl_test(lwd):
     """
     # Lower limit: 40 W/m^2, Upper limit: 700 W/m^2 / 下限: 40 W/m^2，上限: 700 W/m^2
     return (lwd >= 40) & (lwd <= 700)
+
+
+def test_physically_possible(df, station_code=None, lat=None, lon=None, elev=None):
+    """
+    Run all Phase 1 (Physically Possible) checks on a DataFrame.
+    对 DataFrame 运行所有 1 级（物理可能）检查。
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input BSRN data with 'ghi', 'bni', 'dhi', 'lwd'.
+        包含 'ghi'、'bni'、'dhi'、'lwd' 的输入 BSRN 数据。
+    station_code : str, optional
+        BSRN station code to retrieve coordinates.
+        用于检索坐标的 BSRN 站点代码。
+    lat : float, optional
+        Latitude. [degrees] / 纬度。[度]
+    lon : float, optional
+        Longitude. [degrees] / 经度。[度]
+    elev : float, optional
+        Elevation. [m] / 海拔。[米]
+
+    Returns
+    -------
+    df : pd.DataFrame
+        DataFrame with added 'f_ppl_ghi', 'f_ppl_bni', 'f_ppl_dhi', 'f_ppl_lwd' flag columns.
+        增加了 'f_ppl_ghi'、'f_ppl_bni'、'f_ppl_dhi'、'f_ppl_lwd' 标记列的 DataFrame。
+    """
+    if lat is None or lon is None:
+        if station_code in BSRN_STATIONS:
+            meta = BSRN_STATIONS[station_code]
+            lat, lon, elev = meta['lat'], meta['lon'], meta['elev']
+        else:
+            raise ValueError("Station metadata (lat/lon/elev) must be provided.")
+
+    # Calculate required solar geometry / 计算所需的太阳几何参数
+    solpos = geometry.get_solar_position(df.index, lat, lon, elev)
+    zenith = solpos["zenith"]
+    bni_extra = geometry.get_bni_extra(df.index)
+
+    # Apply tests / 执行测试
+    if 'ghi' in df.columns:
+        df['f_ppl_ghi'] = ghi_ppl_test(df['ghi'], zenith, bni_extra).astype(int)
+    if 'bni' in df.columns:
+        df['f_ppl_bni'] = bni_ppl_test(df['bni'], bni_extra).astype(int)
+    if 'dhi' in df.columns:
+        df['f_ppl_dhi'] = dhi_ppl_test(df['dhi'], zenith, bni_extra).astype(int)
+    if 'lwd' in df.columns:
+        df['f_ppl_lwd'] = lwd_ppl_test(df['lwd']).astype(int)
+
+    return df

@@ -5,6 +5,8 @@ BSRN 质量控制 - 跟踪器失准检测。
 
 import numpy as np
 import pandas as pd
+from bsrn.physics import geometry, clearsky
+from bsrn.constants import BSRN_STATIONS
 
 
 def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear=None, bni_clear=None):
@@ -81,3 +83,55 @@ def tracker_off_test(ghi, bni, zenith, ghi_extra=None, ghi_clear=None, dhi_clear
         return ~tracker_is_off
     else:
         return not tracker_is_off
+
+
+def test_tracker_off(df, station_code=None, lat=None, lon=None, elev=None):
+    """
+    Detect solar tracker failures on a DataFrame.
+    在 DataFrame 上检测太阳跟踪器失准。
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input BSRN data with 'ghi', 'bni'.
+        包含 'ghi'、'bni' 的输入 BSRN 数据。
+    station_code : str, optional
+        BSRN station code to retrieve coordinates.
+        用于检索坐标的 BSRN 站点代码。
+    lat : float, optional
+        Latitude. [degrees] / 纬度。[度]
+    lon : float, optional
+        Longitude. [degrees] / 经度。[度]
+    elev : float, optional
+        Elevation. [m] / 海拔。[米]
+
+    Returns
+    -------
+    df : pd.DataFrame
+        DataFrame with added 'f_tracker_off' flag column.
+        增加了 'f_tracker_off' 标记列的 DataFrame。
+    """
+    if lat is None or lon is None:
+        if station_code in BSRN_STATIONS:
+            meta = BSRN_STATIONS[station_code]
+            lat, lon, elev = meta['lat'], meta['lon'], meta['elev']
+        else:
+            raise ValueError("Station metadata (lat/lon/elev) must be provided.")
+
+    # Calculate required solar geometry / 计算所需的太阳几何参数
+    solpos = geometry.get_solar_position(df.index, lat, lon, elev)
+    zenith = solpos["zenith"]
+    ghi_extra = geometry.get_ghi_extra(df.index, zenith)
+
+    # Use clear-sky benchmarks if available, else use fallback logic / 如果可用则使用晴空基准，否则使用回退逻辑
+    # Note: add_clearsky_columns adds 'ghi_clear', 'bni_clear'
+    ghi_c = df['ghi_clear'] if 'ghi_clear' in df.columns else None
+    bni_c = df['bni_clear'] if 'bni_clear' in df.columns else None
+    
+    # Run test / 执行测试
+    f_pass = tracker_off_test(df['ghi'], df['bni'], zenith, ghi_extra=ghi_extra, 
+                              ghi_clear=ghi_c, bni_clear=bni_c)
+    
+    df['f_tracker_off'] = (~f_pass).astype(int)
+
+    return df

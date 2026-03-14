@@ -5,6 +5,8 @@ BSRN 3 级（相互比较）检查 - 闭合测试。
 
 import numpy as np
 import pandas as pd
+from bsrn.physics import geometry
+from bsrn.constants import BSRN_STATIONS
 
 
 def closure_low_sza_test(ghi, bni, dhi, zenith):
@@ -109,3 +111,51 @@ def closure_high_sza_test(ghi, bni, dhi, zenith):
         return (~in_domain) | condition_met
     else:
         return (not in_domain) or condition_met
+
+
+def test_closure(df, station_code=None, lat=None, lon=None, elev=None):
+    """
+    Run all Phase 3 (Closure) consistency checks on a DataFrame.
+    对 DataFrame 运行所有 3 级（闭合）一致性检查。
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input BSRN data with 'ghi', 'bni', 'dhi'.
+        包含 'ghi'、'bni'、'dhi' 的输入 BSRN 数据。
+    station_code : str, optional
+        BSRN station code to retrieve coordinates.
+        用于检索坐标形成 BSRN 站点代码。
+    lat : float, optional
+        Latitude. [degrees] / 纬度。[度]
+    lon : float, optional
+        Longitude. [degrees] / 经度。[度]
+    elev : float, optional
+        Elevation. [m] / 海拔。[米]
+
+    Returns
+    -------
+    df : pd.DataFrame
+        DataFrame with added 'f_closure' flag column.
+        增加了 'f_closure' 标记列的 DataFrame。
+    """
+    if lat is None or lon is None:
+        if station_code in BSRN_STATIONS:
+            meta = BSRN_STATIONS[station_code]
+            lat, lon, elev = meta['lat'], meta['lon'], meta['elev']
+        else:
+            raise ValueError("Station metadata (lat/lon/elev) must be provided.")
+
+    # Calculate required solar geometry / 计算所需的太阳几何参数
+    solpos = geometry.get_solar_position(df.index, lat, lon, elev)
+    zenith = solpos["zenith"]
+
+    # Apply tests / 执行测试 (Low SZA and High SZA tests)
+    # We combine them into a single flag column / 将它们合并为一个标记列
+    f_low = closure_low_sza_test(df['ghi'], df['bni'], df['dhi'], zenith)
+    f_high = closure_high_sza_test(df['ghi'], df['bni'], df['dhi'], zenith)
+    
+    # Combined flag (True = Pass) / 合并标记（True = 通过）
+    df['f_closure'] = (f_low & f_high).astype(int)
+
+    return df
