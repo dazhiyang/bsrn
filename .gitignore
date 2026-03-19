@@ -30,3 +30,7 @@ data/
 
 # Tests
 tests/
+
+# Sphinx 
+docs/sphinx/_build/
+docs/sphinx/generated/

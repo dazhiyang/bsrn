@@ -21,10 +21,13 @@ extensions = [
     "sphinx.ext.mathjax",
     "sphinx.ext.intersphinx",
     "sphinx.ext.extlinks",
+    "sphinx.ext.todo",
+    "sphinx.ext.coverage",
+    "sphinx_design",
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # Cross-reference other projects' docs
 intersphinx_mapping = {
@@ -32,6 +35,7 @@ intersphinx_mapping = {
     "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
 }
 
 # Shortcuts for GitHub links (e.g. :issue:`123`, :pull:`45`, :ghuser:`dazhiyang`)
@@ -42,14 +46,20 @@ extlinks = {
 }
 
 autosummary_generate = True
+autodoc_typehints = "description"
+autodoc_member_order = "bysource"
 
 # HTML theme
-# Change this line:
 html_theme = 'pydata_sphinx_theme'
-# Optional: Add this block to add a GitHub link to the top right of your site
 html_theme_options = {
     "github_url": "https://github.com/dazhiyang/bsrn",
     "show_nav_level": 2,
+    "header_links_before_dropdown": 4,
+    "navbar_align": "left",
+    "footer_start": ["copyright"],
+    "footer_end": ["sphinx-version", "theme-version"],
 }
 html_static_path = ["_static"]
+html_css_files = ["custom.css"]
 html_logo = "_static/logo.jpg"
+html_favicon = "_static/logo.jpg"

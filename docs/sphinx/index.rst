@@ -1,9 +1,10 @@
-.. bsrn documentation master file
+Welcome to bsrn documentation!
+============================
 
 .. raw:: html
 
-   <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-     <img src="_static/logo.jpg" alt="bsrn" style="height: 48px; width: auto;">
+   <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
+     <img src="_static/logo.jpg" alt="bsrn" style="height: 64px; width: auto;">
      <h1 style="margin: 0;">bsrn</h1>
    </div>
 
@@ -12,89 +13,42 @@ It provides automated quality control (QC), solar geometry, clear-sky modeling, 
 cloud enhancement event (CEE) detection, irradiance separation, data retrieval, and visualization tools
 for BSRN station-to-archive files.
 
-Overview
---------
-
 The package implements a six-level QC pipeline based on the BSRN Operations Manual and Forstinger et al. (2021).
-It supports three clear-sky models (Ineichen, McClear, REST2), multiple CSD and CEE detection methods,
-and irradiance decomposition models. MERRA-2 atmospheric inputs for REST2 are fetched from Hugging Face
-into RAM with no disk cache.
+It supports multiple clear-sky models and detection methods, with seamless integration of MERRA-2 data.
 
-Installation
-------------
+.. grid:: 1 2 2 2
+    :gutter: 4
 
-From PyPI (stable release):
+    .. grid-item-card::  User Guide
+        :link: user_guide/index
+        :link-type: doc
 
-.. code-block:: bash
+        Learn how to install and get started with bsrn. Includes a high-level overview of the library's capabilities.
 
-   pip install bsrn
+    .. grid-item-card::  API Reference
+        :link: api/index
+        :link-type: doc
 
-From GitHub (latest development version):
+        Detailed documentation of all functions, classes, and modules in the bsrn package.
 
-.. code-block:: bash
+    .. grid-item-card::  Examples
+        :link: examples
+        :link-type: doc
 
-   pip install git+https://github.com/dazhiyang/bsrn.git
+        Explore tutorials and examples demonstrating bsrn in action.
 
-For visualization features (plotnine, matplotlib):
+    .. grid-item-card::  GitHub
+        :link: https://github.com/dazhiyang/bsrn
 
-.. code-block:: bash
+        View the source code, report issues, and contribute to the project on GitHub.
 
-   pip install bsrn[viz]
+.. toctree::
+   :maxdepth: 2
+   :hidden:
 
-Quick Start
------------
-
-.. code-block:: python
-
-   from bsrn.io.readers import read_station_to_archive
-   from bsrn.modeling.clear_sky import add_clearsky_columns
-
-   # Read a BSRN station-to-archive file
-   df = read_station_to_archive("data/QIQ/qiq0124.dat.gz", logical_records="lr0100")
-
-   # Add clear-sky columns (REST2 fetches MERRA-2 from Hugging Face automatically)
-   df = add_clearsky_columns(df, station_code="QIQ", model="rest2")
-
-Features
---------
-
-**Quality control (6 levels)**
-
-* Level 1 (PPL): Physically possible limits for :math:`G_h`, :math:`B_n`, :math:`D_h`, :math:`L_d`
-* Level 2 (ERL): Extremely rare climatological limits
-* Level 3 (Closure): :math:`G_h` vs :math:`B_n \cos Z + D_h` consistency checks
-* Level 4 (Diffuse ratio): :math:`k`–:math:`k_t` and diffuse-fraction checks
-* Level 5 (K-indices): Clearness-index and :math:`k_b`/:math:`k_t` tests
-* Level 6 (Tracker): Solar tracker off detection
-
-**Clear-sky models**
-
-* Ineichen (monthly Linke turbidity)
-* McClear (CAMS SoDa API, from 2004 onward)
-* REST2 (MERRA-2 from Hugging Face)
-
-**Clear-sky detection**
-
-Reno, Ineichen, Lefevre, BrightSun
-
-**Cloud enhancement event (CEE) detection**
-
-Killinger, Gueymard-style, Wang
-
-**Irradiance separation**
-
-Erbs, BRL, Engerer2, Yang4
-
-Tutorials
----------
-
-Jupyter notebooks demonstrating key workflows:
-
-* `Clear Sky Detection Demo With McClear <https://github.com/dazhiyang/bsrn/blob/main/docs/tutorials/clear_sky_detection.ipynb>`_
-  — McClear clear-sky modeling, QC, Reno CSD, and CSD-point visualization
-
-* `Cloud Enhancement Event Detection with REST2 <https://github.com/dazhiyang/bsrn/blob/main/docs/tutorials/cloud_enhancement_event.ipynb>`_
-  — REST2 clear-sky, QC (closure, diffuse ratio, tracker-off), Wang CEE detection
+   user_guide/index
+   api/index
+   examples
 
 Indices and tables
 ==================
@@ -102,12 +56,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-
-Links
------
-
-* `GitHub repository <https://github.com/dazhiyang/bsrn>`_
-* `BSRN MERRA-2 dataset (Hugging Face) <https://huggingface.co/datasets/dazhiyang/bsrn-merra2>`_
-* `BSRN website <https://bsrn.awi.de/>`_
-
-For detailed API documentation, see the :ref:`modindex`.
