@@ -49,18 +49,18 @@ extlinks = {
 autosummary_generate = True
 autodoc_typehints = "description"
 autodoc_member_order = "bysource"
+pygments_style = "tango"
+pygments_dark_style = "monokai"
 
 # HTML theme
 html_theme = 'pydata_sphinx_theme'
 html_theme_options = {
     "github_url": "https://github.com/dazhiyang/bsrn",
-    "show_nav_level": 2,
-    "header_links_before_dropdown": 4,
+    "header_links_before_dropdown": 6,
     "navbar_align": "left",
     "footer_start": ["copyright"],
     "footer_end": ["sphinx-version", "theme-version"],
 }
 html_static_path = ["_static"]
-html_css_files = ["custom.css"]
 html_logo = "_static/logo.jpg"
 html_favicon = "_static/logo.jpg"
