@@ -1,6 +1,8 @@
 sphinx
 pydata-sphinx-theme
 sphinx-design
+nbsphinx
+ipython
 
 # bsrn package dependencies (core)
 pandas

@@ -25,6 +25,12 @@ It supports multiple clear-sky models and detection methods, with seamless integ
 
         Learn how to install and get started with bsrn. Includes a high-level overview of the library's capabilities.
 
+    .. grid-item-card::  Tutorials
+        :link: tutorials/index
+        :link-type: doc
+
+        Step-by-step tutorials in Jupyter notebooks for core bsrn workflows.
+
     .. grid-item-card::  API Reference
         :link: api/index
         :link-type: doc
@@ -35,7 +41,7 @@ It supports multiple clear-sky models and detection methods, with seamless integ
         :link: examples
         :link-type: doc
 
-        Explore tutorials and examples demonstrating bsrn in action.
+        Explore additional examples demonstrating bsrn in action.
 
     .. grid-item-card::  GitHub
         :link: https://github.com/dazhiyang/bsrn
@@ -47,6 +53,7 @@ It supports multiple clear-sky models and detection methods, with seamless integ
    :hidden:
 
    user_guide/index
+   tutorials/index
    api/index
    examples
 
