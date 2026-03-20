@@ -3,13 +3,6 @@ Utilities
 
 Explicit time averaging
 -----------------------
-:func:`~bsrn.utils.averaging.pretty_average` builds **floor**, **ceiling**, or **center** windows on a
-:class:`~pandas.DatetimeIndex`. It is **not** :meth:`pandas.DataFrame.resample`.
-
-Semantics (month-edge label trimming, coverage thresholds, ``match_ceiling_labels`` for **center**)
-and notebook examples (QIQ, ``hourly_sample_counts``) are documented in
-:doc:`../tutorials/2.qc_and_averaging`.
-
 .. autosummary::
    :toctree: generated/
 

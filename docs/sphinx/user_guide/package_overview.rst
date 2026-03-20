@@ -10,13 +10,13 @@ Modules
 The package is organized into several key modules:
 
 - :py:mod:`bsrn.io`: Data readers and writers for BSRN station-to-archive files.
-- :py:mod:`bsrn.qc`: A multi-level quality control pipeline.
+- :py:mod:`bsrn.qc`: A multi-level quality control pipeline (see :doc:`../tutorials/2.quality_control`).
 - :py:mod:`bsrn.modeling`: Clear-sky modeling and detection algorithms.
 - :py:mod:`bsrn.physics`: Fundamental solar position and astronomical calculations.
 - :py:mod:`bsrn.visualization`: Tools for visualizing solar data and QC results.
 - :py:mod:`bsrn.utils`: Utility functions for data manipulation and analysis (including
   :func:`~bsrn.utils.averaging.pretty_average` for LR0100-style averaging; see
-  :doc:`../tutorials/2.qc_and_averaging`).
+  :doc:`../tutorials/3.time_averaging`).
 
 Data Pipeline
 -------------

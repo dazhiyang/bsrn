@@ -5,22 +5,9 @@ BSRN 标准和常量。
 Contains physical constants, model parameters, and station metadata.
 包含物理常量、模型参数和站点元数据。
 """
-import os
 
-# MERRA-2 parquet assets directory. Keeps data with code when repo is cloned.
-# 1) BSRN_MERRA2_ASSETS env (user override)
-# 2) {project_root}/data/bsrn_static_assets (detected from package location)
-# 3) data/bsrn_static_assets (cwd-relative fallback)
-_bsrn_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_project_root = os.path.dirname(_bsrn_dir)
-_candidate = os.path.join(_project_root, "data", "bsrn_static_assets")
-MERRA2_ASSETS_DIR = os.environ.get(
-    "BSRN_MERRA2_ASSETS"
-) or (
-    _candidate if os.path.isdir(_candidate) else None
-) or "data/bsrn_static_assets"
-
-# Hugging Face dataset for MERRA-2 parquet (REST2 inputs)
+# Hugging Face dataset for MERRA-2 parquet (REST2 inputs; no local path override).
+# REST2 使用的 MERRA-2 parquet 仅从此 Hugging Face 数据集拉取。
 MERRA2_HF_REPO_ID = "dazhiyang/bsrn-merra2"
 MERRA2_MAINTAINER_EMAIL = "yangdazhi.nus@gmail.com"
 

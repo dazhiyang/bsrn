@@ -1,5 +1,7 @@
 # bsrn
 
+This **GitHub repository** is **`bsrn-qc`**: source code and development tooling for the **`bsrn`** Python package (published on [PyPI](https://pypi.org/project/bsrn/) from the same codebase).
+
 `bsrn` is a Python package for the Baseline Surface Radiation Network (BSRN). It provides automated quality control (QC), solar geometry, clear-sky modeling, clear-sky detection (CSD), cloud enhancement event (CEE) detection, irradiance separation, data retrieval, and visualization tools for BSRN station-to-archive files.
 
 ## 🚀 Getting Started
@@ -22,7 +24,7 @@ cd /path/to/bsrn-qc
 pip install -e .
 ```
 
-**Documentation:** [Read the Docs](https://bsrn.readthedocs.io) (when configured)
+**Documentation:** [Read the Docs](https://bsrn.readthedocs.io)
 
 ### Quick Example (Single-File Workflow)
 
@@ -82,6 +84,8 @@ bsrn-qc/
 │       ├── io/
 │       │   ├── readers.py             # Read .001, .002 station-to-archive files
 │       │   ├── retrieval.py           # FTP downloads with retries
+│       │   ├── merra2.py              # MERRA-2 parquet fetch (Hugging Face → RAM)
+│       │   ├── mcclear.py             # McClear / CAMS SoDa client helpers
 │       │   └── writers.py             # Export results
 │       ├── physics/
 │       │   ├── spa.py                 # Native NREL SPA (solar position algorithm)
@@ -107,22 +111,22 @@ bsrn-qc/
 │       └── modeling/
 │           ├── clear_sky.py           # Ineichen clear-sky model
 │           └── separation.py          # Irradiance separation (Erbs, BRL, Engerer2, Yang4)
-├── tests/
-│   ├── test_io.py
-│   ├── test_physics.py
-│   ├── test_visualization.py
-│   ├── test_modeling.py
-│   ├── test_qc.py
-│   └── test_cs_detection.py
 ├── docs/
-│   ├── requirements.txt             # Sphinx & theme for Read the Docs
-│   └── tutorials/
-│       ├── qiq_cee_pipeline.ipynb    # QIQ CEE pipeline demo
-│       └── mcclear_qiq_september.ipynb  # McClear model demo for QIQ (September)
-└── data/
-    ├── download_qiq.py           # Script to download QIQ station data
-    ├── retrive_Linke.py          # Script to retrieve Linke turbidity data
-    └── QIQ/                      # Sample data for station QIQ
+│   ├── requirements.txt               # Sphinx / Read the Docs dependencies
+│   ├── examples/                      # Optional examples (may be empty)
+│   ├── tutorials/                     # Jupyter tutorials (working copies)
+│   │   ├── 1.data_downloading.ipynb
+│   │   ├── 2.quality_control.ipynb
+│   │   ├── 3.time_averaging.ipynb
+│   │   ├── 4.clear_sky_detection.ipynb
+│   │   └── 5.cloud_enhancement_event.ipynb
+│   └── sphinx/                        # Sphinx documentation site
+│       ├── conf.py
+│       ├── index.rst
+│       ├── examples.rst
+│       ├── api/                       # API reference (io, qc, physics, …)
+│       ├── user_guide/                # installation, getting_started, package_overview, …
+│       └── tutorials/                 # Same notebooks + index.rst for nbsphinx
 ```
 
 ## 📖 Examples
@@ -174,7 +178,7 @@ df = add_clearsky_columns(
 
 ### Clear-Sky GHI from REST2 (MERRA-2 via Hugging Face)
 
-REST2 uses MERRA-2 atmospheric inputs from [dazhiyang/bsrn-merra2](https://huggingface.co/datasets/dazhiyang/bsrn-merra2). The `bsrn` package fetches parquet files **into RAM** (no disk cache) when `model="rest2"` is used.
+REST2 uses MERRA-2 atmospheric inputs **only** from the Hugging Face dataset **[dazhiyang/bsrn-merra2](https://huggingface.co/datasets/dazhiyang/bsrn-merra2)** (hourly Parquet files per station, `station_code/*.parquet`). The `bsrn` package fetches them **into RAM** (no disk cache) when `model="rest2"` is used.
 
 ```python
 from bsrn.modeling.clear_sky import add_clearsky_columns
@@ -183,6 +187,8 @@ from bsrn.modeling.clear_sky import add_clearsky_columns
 df = add_clearsky_columns(df, station_code="QIQ", model="rest2")
 # Adds columns: ghi_clear, bni_clear, dhi_clear based on REST2 + MERRA-2
 ```
+
+The dataset README for Hugging Face is maintained in this repo at `data/bsrn_static_assets/README.md` (published to the Hub separately from PyPI).
 
 ### Clear-Sky Detection
 

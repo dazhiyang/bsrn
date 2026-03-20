@@ -3,7 +3,7 @@ Explicit time-window averages for :class:`~pandas.DatetimeIndex` frames (LR0100-
 
 This is **not** :meth:`pandas.DataFrame.resample` semantics. For **floor / ceiling / center**
 windows, monthly label trimming, coverage rules, and examples, see
-``docs/tutorials/2.qc_and_averaging.ipynb``.
+``docs/tutorials/3.time_averaging.ipynb``.
 
 非 ``resample`` 语义；窗定义、月界裁剪、覆盖规则与示例见上述教程笔记本。
 """
@@ -300,7 +300,7 @@ def _aggregate(part, aggfunc):
 def pretty_average(df, rule, alignment="floor", aggfunc="mean", resolution=None, match_ceiling_labels=True):
     """
     Average ``df`` over explicit labeled windows (not pandas ``resample`` semantics).
-    按显式标签窗聚合（非 ``resample``）。语义与示例见 ``docs/tutorials/2.qc_and_averaging.ipynb``。
+    按显式标签窗聚合（非 ``resample``）。语义与示例见 ``docs/tutorials/3.time_averaging.ipynb``。
 
     Parameters
     ----------
@@ -311,7 +311,7 @@ def pretty_average(df, rule, alignment="floor", aggfunc="mean", resolution=None,
         Fixed bin frequency (e.g. ``'1h'``, ``'30min'``). / 固定分箱频率。
     alignment : {'floor', 'ceiling', 'center'}, default ``'floor'``
         **floor** ``[L, L+Δ)`` · **ceiling** ``(L-Δ, L]`` · **center** ``[L-Δ/2+res, L+Δ/2]``.
-        定义见教程 ``docs/tutorials/2.qc_and_averaging.ipynb``。
+        定义见教程 ``docs/tutorials/3.time_averaging.ipynb``。
     aggfunc : str or callable, default ``'mean'``
         Passed to :func:`_aggregate`. / 传入 :func:`_aggregate`。
     resolution : pandas.Timedelta or None, default None
