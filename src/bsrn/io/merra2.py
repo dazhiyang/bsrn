@@ -15,8 +15,32 @@ from bsrn.constants import MERRA2_HF_REPO_ID, MERRA2_MAINTAINER_EMAIL
 
 def _hf_fetch_to_memory(repo_id, filename):
     """
-    Fetch a file from Hugging Face into RAM (no disk cache).
-    Prints when accessing HF. Raises FileNotFoundError with maintainer contact if file is missing.
+    Fetch one dataset file from Hugging Face into RAM (no disk cache; used by ``_fetch_merra2_from_hf``).
+    从 Hugging Face 拉取单个数据集文件到内存（无磁盘缓存；由 ``_fetch_merra2_from_hf`` 使用）。
+
+    Parameters
+    ----------
+    repo_id : str
+        Hugging Face dataset repo id.
+        Hugging Face 数据集仓库 id。
+    filename : str
+        Path within the repo (e.g. ``stn/stnMMYY_merra2.parquet``).
+        仓库内路径（如 ``stn/stnMMYY_merra2.parquet``）。
+
+    Returns
+    -------
+    content : bytes
+        Raw file bytes.
+        原始文件字节。
+
+    Raises
+    ------
+    ImportError
+        If ``huggingface_hub`` is not installed.
+        未安装 ``huggingface_hub`` 时。
+    FileNotFoundError
+        On 404 or other fetch failure; message includes maintainer contact.
+        404 或其他获取失败时；信息含维护者联系方式。
     """
     try:
         from huggingface_hub import hf_hub_url
@@ -51,8 +75,29 @@ def _hf_fetch_to_memory(repo_id, filename):
 
 def _fetch_merra2_from_hf(station_code, index):
     """
-    Fetch MERRA-2 parquet files from Hugging Face for the given station and index.
-    Returns list of bytes (one per unique month in index). Data stays in RAM.
+    Fetch one parquet per unique (year, month) in *index* from Hugging Face (used by ``fetch_rest2``).
+    按 *index* 中唯一 (年, 月) 从 Hugging Face 各取一个 parquet（由 ``fetch_rest2`` 使用）。
+
+    Parameters
+    ----------
+    station_code : str
+        BSRN station code (case-insensitive).
+        BSRN 站点代码（大小写不敏感）。
+    index : pd.DatetimeIndex
+        Non-empty target index; months present determine which files are fetched.
+        非空目标索引；出现的月份决定拉取哪些文件。
+
+    Returns
+    -------
+    contents : list of bytes
+        One element per month, in sorted (year, month) order.
+        每月一个元素，按 (年, 月) 排序。
+
+    Raises
+    ------
+    ValueError
+        If *index* is empty.
+        *index* 为空时。
     """
     if index.empty:
         raise ValueError("index must not be empty. / index 不能为空。")
@@ -68,10 +113,10 @@ def _fetch_merra2_from_hf(station_code, index):
     return contents
 
 
-def load_merra2_parquet(path_or_bytes):
+def _load_merra2_parquet(path_or_bytes):
     """
-    Load MERRA-2 parquet file and return DataFrame with DatetimeIndex.
-    加载 MERRA-2 parquet 文件并返回带 DatetimeIndex 的 DataFrame。
+    Load one MERRA-2 parquet into a UTC-indexed DataFrame (used by ``fetch_rest2`` only).
+    将单个 MERRA-2 parquet 加载为 UTC 索引 DataFrame（仅由 ``fetch_rest2`` 使用）。
 
     Parameters
     ----------
@@ -100,10 +145,10 @@ def load_merra2_parquet(path_or_bytes):
     return data
 
 
-def parse_merra2_for_rest2(raw, target_index):
+def _parse_merra2_for_rest2(raw, target_index):
     """
-    Reindex MERRA-2 data to 1-min target index, interpolate, derive BETA, convert units.
-    将 MERRA-2 数据重索引到 1 分钟目标索引，插值，推导 BETA，并转换单位。
+    Reindex, interpolate, derive BETA, convert units for REST2 (used by ``fetch_rest2`` only).
+    为重索引、插值、推导 BETA、单位换算以适配 REST2（仅由 ``fetch_rest2`` 使用）。
 
     Parameters
     ----------
@@ -183,8 +228,8 @@ def fetch_rest2(index, station_code):
         raise ValueError("index must not be empty. / index 不能为空。")
 
     contents = _fetch_merra2_from_hf(station_code, index)
-    dfs = [load_merra2_parquet(c) for c in contents]
+    dfs = [_load_merra2_parquet(c) for c in contents]
     raw = pd.concat(dfs).sort_index()
     raw = raw[~raw.index.duplicated(keep="first")]
-    rest2 = parse_merra2_for_rest2(raw, index)
+    rest2 = _parse_merra2_for_rest2(raw, index)
     return rest2

@@ -85,7 +85,8 @@ bsrn-qc/
 │       │   ├── readers.py             # Read .001, .002 station-to-archive files
 │       │   ├── retrieval.py           # FTP downloads with retries
 │       │   ├── merra2.py              # MERRA-2 parquet fetch (Hugging Face → RAM)
-│       │   ├── mcclear.py             # McClear / CAMS SoDa client helpers
+│       │   ├── mcclear.py             # SoDa McClear client helpers
+│       │   ├── crs.py                 # SoDa CAMS solar radiation service (CRS) client helpers
 │       │   └── writers.py             # Export results
 │       ├── physics/
 │       │   ├── spa.py                 # Native NREL SPA (solar position algorithm)

@@ -117,6 +117,50 @@ MCCLEAR_VARIABLE_MAP = {
 }
 
 """
+CAMS Radiation Service (CRS) on SoDa.
+SoDa 上的 CAMS 辐射服务（CRS）。
+
+Same HTTPS host and CSV layout as McClear; WPS ``Identifier`` is ``get_cams_radiation``.
+与 McClear 使用相同 HTTPS 主机与 CSV 布局；WPS ``Identifier`` 为 ``get_cams_radiation``。
+
+SoDa CRS CSV also includes clear-sky columns, ``TOA``, ``BHI``, ``Reliability``, etc.
+:func:`bsrn.io.crs.download_crs` keeps only all-sky ``GHI``, ``BNI``, ``DHI`` (Wh→W) as
+``ghi_crs``, ``bni_crs``, ``dhi_crs`` plus the UTC time index.
+SoDa CRS CSV 另含晴空分量、``TOA``、``BHI``、``Reliability`` 等；:func:`bsrn.io.crs.download_crs`
+仅保留全天空 ``GHI``、``BNI``、``DHI``（Wh→W 换算后列名为 ``ghi_crs`` 等）及 UTC 时间索引。
+
+Himawari and MSG GEO metadata (subsatellite point, **60°** reliability radius, minimum
+*start* dates) used by :func:`bsrn.io.crs.download_crs` via ``_check_crs_coverage``.
+Himawari 与 MSG 的 GEO 元数据（星下点、60° 可靠性半径、最早起始日），由 ``_check_crs_coverage`` 使用。
+
+All-sky columns are named ``ghi_crs``, ``bni_crs``, ``dhi_crs`` to leave room for other
+gridded products (e.g. ``ghi_nsrdb``) when merging workflows.
+全天空列使用 ``*_crs`` 后缀，便于与后续其他格点产品（如 ``ghi_nsrdb``）并列区分。
+
+References
+----------
+.. [1] CAMS radiation service — SoDa. https://www.soda-pro.com/web-services/radiation/cams-radiation-service
+"""
+CRS_API_HOST = MCCLEAR_API_HOST
+CRS_INTEGRATED_COLUMNS = ["GHI", "BNI", "DHI"]
+CRS_VARIABLE_MAP = {
+    "GHI": "ghi_crs",
+    "BNI": "bni_crs",
+    "DHI": "dhi_crs",
+}
+CRS_OUTPUT_COLUMNS = ["ghi_crs", "bni_crs", "dhi_crs"]
+
+CRS_HIMAWARI_MIN_START_UTC = "2016-01-01"
+CRS_HIMAWARI_SUBSATELLITE_LAT_DEG = 0.0
+CRS_HIMAWARI_SUBSATELLITE_LON_DEG = 140.7
+CRS_HIMAWARI_EARTH_DISK_RADIUS_DEG = 60.0
+
+CRS_MSG_MIN_START_UTC = "2004-01-01"
+CRS_MSG_SUBSATELLITE_LAT_DEG = 0.0
+CRS_MSG_SUBSATELLITE_LON_DEG = 0.0
+CRS_MSG_EARTH_DISK_RADIUS_DEG = 60.0
+
+"""
 Station Metadata: Mapping of station abbreviations to geographic info.
 站点元数据：站点缩写到地理信息的映射。
 

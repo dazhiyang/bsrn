@@ -1,6 +1,6 @@
 """
-CAMS / McClear HTTP retrieval helpers.
-CAMS / McClear HTTP 下载辅助函数。
+CAMS McClear HTTP retrieval helpers.
+CAMS McClear HTTP 下载辅助函数。
 """
 
 import io
@@ -9,10 +9,68 @@ import requests
 from bsrn.constants import MCCLEAR_INTEGRATED_COLUMNS, MCCLEAR_VARIABLE_MAP, MCCLEAR_API_HOST
 
 
-def download_mcclear(latitude, longitude, start, end, email, elev=None, timeout=30):
+def _parse_mcclear(raw_or_buffer):
     """
-    Download and parse CAMS McClear time series from SoDa.
-    从 SoDa 下载并解析 CAMS McClear 时间序列。
+    Parse SoDa McClear CSV into the project DataFrame (used by ``_download_mcclear`` only).
+    将 SoDa McClear CSV 解析为项目 DataFrame（仅由 ``_download_mcclear`` 使用）。
+
+    Parameters
+    ----------
+    raw_or_buffer : str or file-like
+        Raw CAMS text or readable text buffer.
+        CAMS 原始文本或可读文本缓冲区。
+
+    Returns
+    -------
+    data : pd.DataFrame
+        Parsed time-series data with UTC index for sub-daily resolutions.
+        解析后的时间序列数据；亚日尺度为 UTC 索引。
+
+    Raises
+    ------
+    ValueError
+        If the McClear header line is missing or the payload is invalid.
+        缺少 McClear 表头或载荷无效时。
+
+    References
+    ----------
+    .. [1] CAMS McClear service info. (n.d.). SoDa.
+       http://www.soda-pro.com/web-services/radiation/cams-mcclear/info
+    """
+    if isinstance(raw_or_buffer, str):
+        fbuf = io.StringIO(raw_or_buffer)
+    else:
+        fbuf = raw_or_buffer
+
+    # Read metadata header lines until column names line / 读取元数据表头直到列名行
+    while True:
+        line = fbuf.readline()
+        if not line:
+            raise ValueError("Invalid McClear payload: header not found. / 无法找到表头。")
+        line = line.rstrip("\n")
+        if line.startswith("# Observation period"):
+            names = line.lstrip("# ").split(";")
+            break
+
+    data = pd.read_csv(fbuf, sep=";", comment="#", header=None, names=names)
+    obs_period = data["Observation period"].str.split("/")
+    data.index = pd.to_datetime(obs_period.str[0], utc=True)
+
+    # Convert Wh/m^2 to W/m^2 using interval duration / 依据时间区间长度将 Wh/m^2 转换为 W/m^2
+    integrated_cols = [c for c in MCCLEAR_INTEGRATED_COLUMNS if c in data.columns]
+    time_delta = pd.to_datetime(obs_period.str[1]) - pd.to_datetime(obs_period.str[0])
+    hours = time_delta.dt.total_seconds() / 3600.0
+    data[integrated_cols] = data[integrated_cols].divide(hours.tolist(), axis="rows")
+
+    data.index.name = None
+    data = data.rename(columns=MCCLEAR_VARIABLE_MAP)
+    return data
+
+
+def _download_mcclear(latitude, longitude, start, end, email, elev=None, timeout=30):
+    """
+    Download and parse CAMS McClear from SoDa (used by ``fetch_mcclear`` only).
+    从 SoDa 下载并解析 CAMS McClear（仅由 ``fetch_mcclear`` 调用）。
 
     Parameters
     ----------
@@ -136,60 +194,10 @@ def download_mcclear(latitude, longitude, start, end, email, elev=None, timeout=
     # Successful responses are CSV; parse directly from memory.
     # 成功响应为 CSV；直接在内存中解析。
     fbuf = io.StringIO(res.content.decode("utf-8"))
-    data = parse_mcclear(fbuf)
+    data = _parse_mcclear(fbuf)
     return data
 
-def parse_mcclear(raw_or_buffer):
-    """
-    Parse CAMS McClear CSV payload to project DataFrame + metadata.
-    解析 CAMS McClear CSV 原始载荷并返回项目 DataFrame 与元数据。
 
-    Parameters
-    ----------
-    raw_or_buffer : str or file-like
-        Raw CAMS text or readable text buffer.
-        CAMS 原始文本或可读文本缓冲区。
-
-    Returns
-    -------
-    data : pd.DataFrame
-        Parsed time-series data with UTC index for sub-daily resolutions.
-        解析后的时间序列数据；亚日尺度为 UTC 时区索引。
-
-    References
-    ----------
-    .. [1] CAMS McClear service info. (n.d.). SoDa.
-       http://www.soda-pro.com/web-services/radiation/cams-mcclear/info
-    """
-    if isinstance(raw_or_buffer, str):
-        fbuf = io.StringIO(raw_or_buffer)
-    else:
-        fbuf = raw_or_buffer
-
-    # Read metadata header lines until column names line / 读取元数据表头直到列名行
-    while True:
-        line = fbuf.readline()
-        if not line:
-            raise ValueError("Invalid McClear payload: header not found. / 无法找到表头。")
-        line = line.rstrip("\n")
-        if line.startswith("# Observation period"):
-            names = line.lstrip("# ").split(";")
-            break
-
-    data = pd.read_csv(fbuf, sep=";", comment="#", header=None, names=names)
-    obs_period = data["Observation period"].str.split("/")
-    data.index = pd.to_datetime(obs_period.str[0], utc=True)
-
-    # Convert Wh/m^2 to W/m^2 using interval duration / 依据时间区间长度将 Wh/m^2 转换为 W/m^2
-    integrated_cols = [c for c in MCCLEAR_INTEGRATED_COLUMNS if c in data.columns]
-    time_delta = pd.to_datetime(obs_period.str[1]) - pd.to_datetime(obs_period.str[0])
-    hours = time_delta.dt.total_seconds() / 3600.0
-    data[integrated_cols] = data[integrated_cols].divide(hours.tolist(), axis="rows")
-
-    data.index.name = None
-    data = data.rename(columns=MCCLEAR_VARIABLE_MAP)
-    return data
-    
 def fetch_mcclear(index, latitude, longitude, elev, email, timeout=30):
     """
     Retrieve and align McClear data to a target DatetimeIndex.
@@ -233,7 +241,7 @@ def fetch_mcclear(index, latitude, longitude, elev, email, timeout=30):
     start = pd.Timestamp(index.min()).to_pydatetime()
     end = pd.Timestamp(index.max()).to_pydatetime()
 
-    data = download_mcclear(
+    data = _download_mcclear(
         latitude=latitude,
         longitude=longitude,
         start=start,
