@@ -114,6 +114,7 @@ bsrn-qc/
 │           └── separation.py          # Irradiance separation (Erbs, BRL, Engerer2, Yang4)
 ├── docs/
 │   ├── conf.py                        # Sphinx config; source dir = docs/ (tutorials + sphinx/ RST)
+│   ├── index.rst                      # Site homepage (root index.html for Read the Docs)
 │   ├── requirements.txt               # Sphinx / Read the Docs dependencies
 │   ├── examples/                      # Examples landing page (index.rst) + optional scripts
 │   │   └── index.rst
@@ -123,8 +124,7 @@ bsrn-qc/
 │   │   ├── 3.time_averaging.ipynb
 │   │   ├── 4.clear_sky_detection.ipynb
 │   │   └── 5.cloud_enhancement_event.ipynb
-│   └── sphinx/                        # RST site (home index, user_guide, api, _static)
-│       ├── index.rst
+│   └── sphinx/                        # RST (user_guide, api, _static); not the doc homepage
 │       ├── api/                       # API reference (io, qc, physics, …)
 │       └── user_guide/                # installation, getting_started, package_overview, …
 ```

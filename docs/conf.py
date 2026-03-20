@@ -1,5 +1,5 @@
-# Sphinx configuration — lives in docs/ so the **source directory** is ``docs/``.
-# That way ``docs/tutorials/`` is a normal doc path (``tutorials/...``) with nothing under ``sphinx/``.
+# Sphinx configuration — **source directory** is ``docs/`` (``index.rst`` → root ``index.html`` for RTD).
+# ``docs/tutorials/`` is a normal doc path (``tutorials/...``) with nothing under ``sphinx/``.
 #
 # Local build (from repo root):
 #   sphinx-build -b html docs docs/_build/html
@@ -20,8 +20,8 @@ copyright = "Dazhi Yang"
 author = "Dazhi Yang"
 release = "0.1.2"
 
-# Master document is under sphinx/; tutorials live alongside as docs/tutorials/.
-root_doc = "sphinx/index"
+# Master document at docs root → index.html for Read the Docs root URL.
+root_doc = "index"
 
 extensions = [
     "sphinx.ext.autodoc",

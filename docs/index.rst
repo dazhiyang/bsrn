@@ -4,7 +4,7 @@ Welcome to bsrn documentation!
 .. raw:: html
 
    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 2rem;">
-     <img src="../_static/logo.jpg" alt="bsrn" style="height: 64px; width: auto;">
+     <img src="_static/logo.jpg" alt="bsrn" style="height: 64px; width: auto;">
      <h1 style="margin: 0;">bsrn</h1>
    </div>
 
