@@ -82,7 +82,8 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
 
     df = df.sort_index()
     # For ceiling-aligned data, the last label might be the 1st of the next month.
-    unique_months = df.index.shift(-1, freq="s").to_period("M").unique()
+    clean_idx = df.index.tz_localize(None) if df.index.tz is not None else df.index
+    unique_months = clean_idx.shift(-1, freq="s").to_period("M").unique()
     if len(unique_months) != 1:
         raise ValueError(f"Found multiple months based on interval coverage: {list(unique_months)}")
 
@@ -237,6 +238,9 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
         ) + scale_fill_manual(values=full_color_map)
 
     if output_file:
-        p.save(output_file, dpi=300)
+        import warnings
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", module="plotnine")
+            p.save(output_file, dpi=300, width=width_inch, height=height_inch, verbose=False)
 
     return p

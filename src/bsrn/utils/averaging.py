@@ -305,8 +305,8 @@ def pretty_average(df, rule, alignment="ceiling", aggfunc="mean", resolution=Non
     Parameters
     ----------
     df : pandas.DataFrame
-        Must use a :class:`~pandas.DatetimeIndex` and include a ``zenith`` column ($Z$, degrees).
-        须为 :class:`~pandas.DatetimeIndex`，且含 ``zenith`` 列（$Z$，度）。
+        Must use a :class:`~pandas.DatetimeIndex`.
+        须为 :class:`~pandas.DatetimeIndex`。
     rule : str
         Fixed bin frequency (e.g. ``'1h'``, ``'30min'``). / 固定分箱频率。
     alignment : {'floor', 'ceiling', 'center'}, default ``'ceiling'``
@@ -331,19 +331,11 @@ def pretty_average(df, rule, alignment="ceiling", aggfunc="mean", resolution=Non
     ------
     TypeError
         If ``df.index`` is not a :class:`~pandas.DatetimeIndex`. / 索引非 :class:`~pandas.DatetimeIndex`。
-    ValueError
-        If ``zenith`` is missing. / 缺少 ``zenith`` 列。
     """
     if not isinstance(df.index, pd.DatetimeIndex):
         raise TypeError(
             "pretty_average requires a DatetimeIndex; set df.index or use set_index. / "
             "pretty_average 需要 DatetimeIndex。"
-        )
-
-    if "zenith" not in df.columns:
-        raise ValueError(
-            "pretty_average requires a 'zenith' column (solar zenith angle, degrees). / "
-            "pretty_average 需要 ``zenith`` 列（太阳天顶角，度）。"
         )
 
     if df.empty:

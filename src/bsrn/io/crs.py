@@ -13,6 +13,7 @@ import math
 import pandas as pd
 import requests
 from bsrn.constants import (
+    BSRN_STATIONS,
     CRS_API_HOST,
     CRS_HF_REPO_ID,
     CRS_HIMAWARI_EARTH_DISK_RADIUS_DEG,
@@ -516,28 +517,74 @@ def fetch_crs_hf(index, station_code):
     return aligned
 
 
-def add_crs_columns(df, station_code):
+def add_crs_columns(df, station_code=None, lat=None, lon=None, elev=None):
     """
     Adds CRS (CAMS Radiation Service) all-sky columns to a DataFrame.
     Fetches data from Hugging Face automatically.
     向 DataFrame 添加 CRS (CAMS 辐射服务) 全天空辐射列。自动从 Hugging Face 获取数据。
+
+    Location can be given by BSRN station code or by explicit lat/lon/elev.
+    位置可由 BSRN 站点代码指定，或由显式的 lat/lon/elev 指定。
 
     Parameters
     ----------
     df : pd.DataFrame
         DataFrame to which columns will be added. Index must be DatetimeIndex.
         要添加列的 DataFrame。索引必须是 DatetimeIndex。
-    station_code : str
-        BSRN station code (e.g. "QIQ").
-        BSRN 站点代码（如 "QIQ"）。
+    station_code : str, optional
+        BSRN station abbreviation. [e.g. 'QIQ'] Used if lat/lon/elev not provided.
+        BSRN 站点缩写。[例如 'QIQ']。未提供 lat/lon/elev 时使用。
+    lat : float, optional
+        Latitude. [degrees] Required for non-BSRN stations if station_code omitted.
+        纬度。[度]。非 BSRN 站点且未提供 station_code 时必填。
+    lon : float, optional
+        Longitude. [degrees] Required for non-BSRN stations if station_code omitted.
+        经度。[度]。非 BSRN 站点且未提供 station_code 时必填。
+    elev : float, optional
+        Elevation. [m] Required for non-BSRN stations if station_code omitted.
+        海拔。[米]。非 BSRN 站点且未提供 station_code 时必填。
 
     Returns
     -------
     df : pd.DataFrame
         The input DataFrame with added crs columns.
         增加了 CRS 列的输入 DataFrame。
+
+    Raises
+    ------
+    ValueError
+        If ``df.index`` is not a :class:`~pandas.DatetimeIndex`. / 索引非 DatetimeIndex。
+    ValueError
+        If neither a valid station_code nor complete (lat, lon, elev) is provided.
+        若既未提供有效 station_code 也未提供完整的 (lat, lon, elev)。
     """
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise ValueError("DataFrame index must be a pandas DatetimeIndex.")
+
+    # Resolve metadata: explicit lat/lon/elev or BSRN lookup
+    if lat is not None and lon is not None and elev is not None:
+        pass  # use provided coordinates
+    elif station_code is not None and station_code in BSRN_STATIONS:
+        meta = BSRN_STATIONS[station_code]
+        lat, lon, elev = meta["lat"], meta["lon"], meta["elev"]
+    elif station_code is not None:
+        raise ValueError(
+            f"Station '{station_code}' not found in BSRN registry. "
+            "For non-BSRN stations, provide 'lat', 'lon', and 'elev' explicitly. / "
+            f"在 BSRN 注册表中未找到站点 '{station_code}'。非 BSRN 站点请显式提供 lat、lon、elev。"
+        )
+    else:
+        raise ValueError(
+            "Insufficient metadata. Provide a valid BSRN 'station_code' or "
+            "explicit 'lat', 'lon', and 'elev'. / "
+            "元数据不足。请提供有效的 BSRN 站点代码或显式的 lat、lon、elev。"
+        )
+
+    if station_code is None:
+        raise ValueError("fetch_crs_hf currently requires 'station_code' to fetch parquets from Hugging Face.")
+
     crs_data = fetch_crs_hf(df.index, station_code)
     for col in crs_data.columns:
         df[col] = crs_data[col]
     return df
+

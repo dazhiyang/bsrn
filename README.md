@@ -30,9 +30,10 @@ pip install -e .
 
 ```python
 from bsrn.io.retrieval import download_bsrn_stn, get_bsrn_file_inventory
-from bsrn.io.readers import read_bsrn_station_to_archive
+from bsrn.io.readers import read_station_to_archive
+from bsrn.physics.geometry import add_solpos_columns
 from bsrn.modeling.clear_sky import add_clearsky_columns
-from bsrn.constants import BSRN_STATIONS
+from bsrn.qc.wrapper import run_qc
 
 # 1. See what data is available
 inventory = get_bsrn_file_inventory(["QIQ"], username="your_user", password="your_pass")
@@ -41,10 +42,19 @@ inventory = get_bsrn_file_inventory(["QIQ"], username="your_user", password="you
 download_bsrn_stn("QIQ", "data/QIQ", username="your_user", password="your_pass")
 
 # 3. Read a single monthly file (one file at a time)
-df = read_bsrn_station_to_archive("data/QIQ/qiq0124.dat.gz")
+df = read_station_to_archive("data/QIQ/qiq0124.dat.gz")
 
-# 4. Add clear-sky reference columns for this file only
+# 4. Add solar position (recommended before time-averaging or clear-sky)
+df = add_solpos_columns(df, "QIQ")
+
+# 5. Add clear-sky reference columns (defaults to Ineichen)
 df = add_clearsky_columns(df, "QIQ")
+
+# 6. Run Quality Control (QC) & filter bad data
+df = run_qc(df, "QIQ")
+flag_cols = [c for c in df.columns if c.startswith("flag")]
+df = df[df[flag_cols].sum(axis=1) == 0].copy()
+df.drop(columns=flag_cols, inplace=True)
 ```
 
 ## 🛠 Features
@@ -59,6 +69,7 @@ The QC implementation is primarily based on the [BSRN Operations Manual (2018)](
 - **Level 6 (Tracker-Off Detection):** Identify tracking errors by comparing measured values with clear-sky and extraterrestrial irradiance.
 - **Solar Geometry:** Native NREL SPA implementation for high-precision solar position calculations.
 - **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API, from 2004 onward), and REST2 (MERRA-2 from Hugging Face).
+- **Satellite Data:** Load CAMS solar radiation service (CRS) all-sky irradiance directly from Hugging Face into memory.
 - **Clear-Sky Detection (CSD):** Reno, Ineichen, Lefevre, and BrightSun methods to identify clear-sky periods from irradiance time series.
 - **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect periods when measured GHI significantly exceeds clear-sky or extraterrestrial references and to filter events by temporal duration.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
@@ -156,6 +167,8 @@ bni_extra = get_bni_extra(times)  # Spencer (1971) method
 ```python
 from bsrn.modeling.clear_sky import add_clearsky_columns
 
+# Automatically computes solar geometry if missing, but it is highly
+# recommended to call `add_solpos_columns(df)` first for 1-minute data!
 df = add_clearsky_columns(df, "QIQ")
 # Adds columns: ghi_clear, bni_clear, dhi_clear
 ```

@@ -28,22 +28,26 @@ if not os.path.exists(INPUT_FILE):
 df = bsrn.io.readers.read_station_to_archive(INPUT_FILE, logical_records="lr0100")
 print(f"Loaded {len(df)} rows from archive.")
 
-# 3. Add REST2 clear-sky columns (fetches MERRA-2 from Hugging Face)
+# 3. Add solar positioning
+# 计算太阳几何角
+print("Calculating solar geometry...")
+df = bsrn.physics.geometry.add_solpos_columns(df, station_code=station_code)
+
+# 4. Add REST2 clear-sky columns (fetches MERRA-2 from Hugging Face)
 # 添加 REST2 晴空列（从 Hugging Face 获取 MERRA-2）
 print("Fetching MERRA-2 and adding REST2 clear-sky columns...")
 df = bsrn.modeling.clear_sky.add_clearsky_columns(df, station_code=station_code, model="rest2")
 
-# 4. Run QC suite
+# 5. Run QC suite
 # 运行 QC 套件
 print("Running QC suite...")
 df = bsrn.qc.wrapper.run_qc(df, station_code=station_code)
 
-# 5. Add solar positioning (zenith) for averaging
-# 为平均添加太阳位置（天顶角）
-meta = bsrn.constants.BSRN_STATIONS[station_code]
-lat, lon, elev = meta["lat"], meta["lon"], meta["elev"]
-solpos = bsrn.physics.geometry.get_solar_position(df.index, lat, lon, elev)
-df["zenith"] = solpos["zenith"]
+print("Removing data that failed any QC test...")
+flag_cols = [c for c in df.columns if c.startswith("flag")]
+df = df[df[flag_cols].sum(axis=1) == 0].copy()
+df.drop(columns=flag_cols, inplace=True)
+print(f"Rows remaining after QC filtering: {len(df)}")
 
 # 6. Perform time averaging (1-hour, ceiling alignment)
 # 执行时间平均（1 小时，向上对齐）

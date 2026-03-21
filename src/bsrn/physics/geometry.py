@@ -8,6 +8,7 @@ Provides high-precision solar position and extraterrestrial radiation.
 import pandas as pd
 import numpy as np
 from bsrn.physics import spa
+from bsrn.constants import BSRN_STATIONS
 
 
 def get_pressure_from_elevation(elev):
@@ -183,3 +184,89 @@ def get_ghi_extra(times, zenith):
     bni_extra = get_bni_extra(times)
     mu0 = np.cos(np.radians(zenith))
     return bni_extra * np.maximum(mu0, 0)
+
+
+def add_solpos_columns(df, station_code=None, lat=None, lon=None, elev=None):
+    """
+    Adds high-precision solar geometry and extraterrestrial irradiance columns to a DataFrame.
+    向 DataFrame 添加高精度太阳几何和地外辐射列。
+
+    Location can be given by BSRN station code or by explicit lat/lon/elev.
+    位置可由 BSRN 站点代码指定，或由显式的 lat/lon/elev 指定。
+
+    Parameters
+    ----------
+    df : pd.DataFrame
+        Input data with pd.DatetimeIndex.
+        包含 DatetimeIndex 的输入数据。
+    station_code : str, optional
+        BSRN station abbreviation. [e.g. 'QIQ'] Used if lat/lon/elev not provided.
+        BSRN 站点缩写。[例如 'QIQ']。未提供 lat/lon/elev 时使用。
+    lat : float, optional
+        Latitude. [degrees] Required if station_code omitted.
+        纬度。[度]。未提供 station_code 时必填。
+    lon : float, optional
+        Longitude. [degrees] Required if station_code omitted.
+        经度。[度]。未提供 station_code 时必填。
+    elev : float, optional
+        Elevation. [m] Required if station_code omitted.
+        海拔。[米]。未提供 station_code 时必填。
+
+    Returns
+    -------
+    df : pd.DataFrame
+        DataFrame with added 'zenith', 'apparent_zenith', 'azimuth', 'bni_extra', and 'ghi_extra' columns.
+        增加了 'zenith'、'apparent_zenith'、'azimuth'、'bni_extra' 和 'ghi_extra' 列的 DataFrame。
+
+    Raises
+    ------
+    ValueError
+        If ``df.index`` is not a :class:`~pandas.DatetimeIndex`. / 索引非 DatetimeIndex。
+    ValueError
+        If the median timestep is > 5 minutes (prevents non-linear geometric errors).
+        若数据时间步长大于 5 分钟（防止非线性几何误差）。
+    ValueError
+        If neither a valid station_code nor complete (lat, lon, elev) is provided.
+        若既未提供有效 station_code 也未提供完整的 (lat, lon, elev)。
+    """
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise ValueError("DataFrame index must be a pandas DatetimeIndex.")
+
+    if len(df.index) > 1:
+        # Check median time step size / 检查步长中位数
+        median_dt = pd.Series(df.index).diff().median()
+        if pd.notna(median_dt) and median_dt > pd.Timedelta(minutes=5):
+            raise ValueError(
+                f"Geometrical error: Calculating solar position on low-frequency data (timestep ≈ {median_dt}) "
+                "introduces severe inaccuracies due to the non-linear diurnal path of the sun. "
+                "Always compute solar position at high resolution (e.g., 1-minute) BEFORE averaging."
+            )
+
+    if lat is not None and lon is not None and elev is not None:
+        pass  # use provided coordinates
+    elif station_code is not None and station_code in BSRN_STATIONS:
+        meta = BSRN_STATIONS[station_code]
+        lat, lon, elev = meta["lat"], meta["lon"], meta["elev"]
+    elif station_code is not None:
+        raise ValueError(
+            f"Station '{station_code}' not found in BSRN registry. "
+            "For non-BSRN stations, provide 'lat', 'lon', and 'elev' explicitly. / "
+            f"在 BSRN 注册表中未找到站点 '{station_code}'。非 BSRN 站点请显式提供 lat、lon、elev。"
+        )
+    else:
+        raise ValueError(
+            "Insufficient metadata. Provide a valid BSRN 'station_code' or "
+            "explicit 'lat', 'lon', and 'elev'. / "
+            "元数据不足。请提供有效的 BSRN 站点代码或显式的 lat、lon、elev。"
+        )
+    
+    solpos = get_solar_position(df.index, lat, lon, elev)
+    df["zenith"] = solpos["zenith"]
+    df["apparent_zenith"] = solpos["apparent_zenith"]
+    df["azimuth"] = solpos["azimuth"]
+    
+    df["bni_extra"] = get_bni_extra(df.index)
+    df["ghi_extra"] = get_ghi_extra(df.index, df["zenith"])
+    
+    return df
+

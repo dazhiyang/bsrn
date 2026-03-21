@@ -52,6 +52,8 @@ def _parse_mcclear(raw_or_buffer):
             names = line.lstrip("# ").split(";")
             break
 
+    data = pd.read_csv(fbuf, sep=";", comment="#", header=None, names=names)
+    
     # Interval bounds from first column / 从首列解析观测时段起止
     obs_period = data["Observation period"].str.split("/")
     # Using the second part of the period (end-time) for ceiling-style labeling. 

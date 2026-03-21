@@ -599,9 +599,18 @@ def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None,
     Raises
     ------
     ValueError
+        If ``df.index`` is not a :class:`~pandas.DatetimeIndex`. / 索引非 DatetimeIndex。
+    ValueError
+        If solar geometry columns are missing and the DataFrame frequency is >5 min,
+        causing the automatic `add_solpos_columns` fallback to fail.
+        若缺少太阳几何列且聚合度大于5分钟，自动补充将失败。
+    ValueError
         If neither a valid station_code nor complete (lat, lon, elev) is provided.
         若既未提供有效 station_code 也未提供完整的 (lat, lon, elev)。
     """
+    if not isinstance(df.index, pd.DatetimeIndex):
+        raise ValueError("DataFrame index must be a pandas DatetimeIndex.")
+
     # Resolve metadata: explicit lat/lon/elev or BSRN lookup (same pattern as QC wrapper)
     if lat is not None and lon is not None and elev is not None:
         pass  # use provided coordinates
@@ -621,11 +630,25 @@ def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None,
             "元数据不足。请提供有效的 BSRN 站点代码或显式的 lat、lon、elev。"
         )
     
-    # Get solar geometry / 获取太阳几何参数
-    solpos = geometry.get_solar_position(df.index, lat, lon, elev)
-    zenith = solpos["zenith"]
-    apparent_zenith = solpos["apparent_zenith"]
-    bni_extra = geometry.get_bni_extra(df.index)
+    # Ensure solar geometry columns exist / 确保太阳几何列存在
+    required_cols = {"zenith", "apparent_zenith", "bni_extra"}
+    if not required_cols.issubset(df.columns):
+        if len(df.index) > 1:
+            median_dt = pd.Series(df.index).diff().median()
+            if pd.notna(median_dt) and median_dt > pd.Timedelta(minutes=5):
+                raise ValueError(
+                    f"Geometrical error: Generating clear-sky models on low-frequency data (timestep ≈ {median_dt}) "
+                    "introduces severe inaccuracies. Always calculate clear-sky at high resolution (e.g., 1-minute)."
+                )
+        from bsrn.physics.geometry import get_solar_position, get_bni_extra
+        solpos = get_solar_position(df.index, lat=lat, lon=lon, elev=elev)
+        zenith = solpos["zenith"]
+        apparent_zenith = solpos["apparent_zenith"]
+        bni_extra = get_bni_extra(df.index)
+    else:
+        zenith = df["zenith"]
+        apparent_zenith = df["apparent_zenith"]
+        bni_extra = df["bni_extra"]
     
     if model.lower() == "ineichen":
         # Handle monthly Linke turbidity values / 处理月度 Linke 浑浊度值
