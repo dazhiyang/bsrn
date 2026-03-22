@@ -77,7 +77,7 @@ The QC implementation is primarily based on the [BSRN Operations Manual (2018)](
 - **Level 6 (Tracker-Off Detection):** Identify tracking errors by comparing measured values with clear-sky and extraterrestrial irradiance.
 - **Solar Geometry:** Native NREL SPA implementation for high-precision solar position calculations.
 - **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API, from 2004 onward), and REST2 (MERRA-2 from Hugging Face).
-- **Satellite Data:** Load CAMS solar radiation service (CRS) all-sky irradiance directly from Hugging Face into memory.
+- **Satellite Data:** Load CAMS solar radiation service (CRS) and National Solar Radiation Database (NSRDB) all-sky irradiance directly from Hugging Face into memory.
 - **Clear-Sky Detection (CSD):** Reno, Ineichen, Lefevre, and BrightSun methods to identify clear-sky periods from irradiance time series.
 - **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect periods when measured GHI significantly exceeds clear-sky or extraterrestrial references and to filter events by temporal duration.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
@@ -106,6 +106,7 @@ bsrn-qc/
 │       │   ├── merra2.py              # MERRA-2 parquet fetch (Hugging Face → RAM)
 │       │   ├── mcclear.py             # SoDa McClear client helpers
 │       │   ├── crs.py                 # SoDa CAMS solar radiation service (CRS) client helpers
+│       │   ├── nsrdb.py               # NREL NSRDB all-sky data client helpers
 │       │   └── writers.py             # Export results
 │       ├── physics/
 │       │   ├── spa.py                 # Native NREL SPA (solar position algorithm)
@@ -210,6 +211,18 @@ df = add_clearsky_columns(df, station_code="QIQ", model="rest2")
 ```
 
 The dataset README for Hugging Face is maintained in this repo at `data/bsrn_static_assets/README.md` (published to the Hub separately from PyPI).
+
+### All-Sky GHI from NSRDB (NREL via Hugging Face)
+
+Similar to REST2, NSRDB all-sky data is fetched directly from the Hugging Face dataset **[dazhiyang/bsrn-nsrdb-conus](https://huggingface.co/datasets/dazhiyang/bsrn-nsrdb-conus)** (and other variants).
+
+```python
+from bsrn.io.nsrdb import add_nsrdb_columns
+
+# Fetch NSRDB all-sky GHI/DNI/DHI from Hugging Face
+df = add_nsrdb_columns(df, station_code="QIQ", variant="conus")
+# Adds columns: ghi_nsrdb, bni_nsrdb, dhi_nsrdb
+```
 
 ### Clear-Sky Detection
 

@@ -24,6 +24,11 @@ References
 Driemel, A., et al. (2018). Baseline Surface Radiation Network (BSRN): 
 structure and data description (1992–2017). Earth System Science Data, 
 10(3), 1491-1501.
+
+Note
+----------
+The KCC for CLH, GVN, MNM, SYO and TIR are inferred from the station locations.
+
 """
 BSRN_STATIONS = {
     "ABS": {"name": "Abashiri", "lat": 44.0178, "lon": 144.2797, "elev": 38.0, "status": "active", "kgc": "Dfb"},
@@ -41,7 +46,7 @@ BSRN_STATIONS = {
     "CAM": {"name": "Camborne", "lat": 50.2167, "lon": -5.3167, "elev": 88.0, "status": "inactive", "kgc": "Cfb"},
     "CAP": {"name": "Cape Baranova", "lat": 79.27, "lon": 101.75, "elev": 25.0, "status": "closed", "kgc": "ET"},
     "CAR": {"name": "Carpentras", "lat": 44.083, "lon": 5.059, "elev": 100.0, "status": "closed", "kgc": "Csa"},
-    "CLH": {"name": "Chesapeake Light", "lat": 36.905, "lon": -75.713, "elev": 37.0, "status": "closed", "kgc": ""},
+    "CLH": {"name": "Chesapeake Light", "lat": 36.905, "lon": -75.713, "elev": 37.0, "status": "closed", "kgc": "Cfa"},
     "CNR": {"name": "Cener", "lat": 42.816, "lon": -1.601, "elev": 471.0, "status": "active", "kgc": "Cfb"},
     "COC": {"name": "Cocos Island", "lat": -12.193, "lon": 96.835, "elev": 6.0, "status": "inactive", "kgc": "Af"},
     "DAA": {"name": "De Aar", "lat": -30.6667, "lon": 23.993, "elev": 1287.0, "status": "inactive", "kgc": "BSk"},
@@ -60,7 +65,7 @@ BSRN_STATIONS = {
     "GIM": {"name": "Granite Island", "lat": 46.721, "lon": -87.411, "elev": 208.0, "status": "active", "kgc": "Dfb"},
     "GOB": {"name": "Gobabeb", "lat": -23.5614, "lon": 15.042, "elev": 407.0, "status": "active", "kgc": "BWh"},
     "GUR": {"name": "Gurgaon", "lat": 28.4249, "lon": 77.156, "elev": 259.0, "status": "closed", "kgc": "BSh"},
-    "GVN": {"name": "Georg von Neumayer", "lat": -70.65, "lon": -8.25, "elev": 42.0, "status": "active", "kgc": ""},
+    "GVN": {"name": "Georg von Neumayer", "lat": -70.65, "lon": -8.25, "elev": 42.0, "status": "active", "kgc": "EF"},
     "HOW": {"name": "Howrah", "lat": 22.5535, "lon": 88.3064, "elev": 51.0, "status": "closed", "kgc": "Aw"},
     "ILO": {"name": "Ilorin", "lat": 8.5333, "lon": 4.5667, "elev": 350.0, "status": "closed", "kgc": "Aw"},
     "INO": {"name": "Marguele", "lat": 44.3439, "lon": 26.0123, "elev": 110.0, "status": "active", "kgc": "Dfa"},
@@ -74,7 +79,7 @@ BSRN_STATIONS = {
     "LRC": {"name": "Langley Research Center", "lat": 37.1038, "lon": -76.3872, "elev": 3.0, "status": "active", "kgc": "Cfa"},
     "LYU": {"name": "Lanyu Station", "lat": 22.037, "lon": 121.5583, "elev": 324.0, "status": "active", "kgc": "Af"},
     "MAN": {"name": "Momote", "lat": -2.058, "lon": 147.425, "elev": 6.0, "status": "closed", "kgc": "Af"},
-    "MNM": {"name": "Minamitorishima", "lat": 24.2883, "lon": 153.9833, "elev": 7.1, "status": "active", "kgc": ""},
+    "MNM": {"name": "Minamitorishima", "lat": 24.2883, "lon": 153.9833, "elev": 7.1, "status": "active", "kgc": "Aw"},
     "NAU": {"name": "Nauru Island", "lat": -0.521, "lon": 166.9167, "elev": 7.0, "status": "closed", "kgc": "Af"},
     "NEW": {"name": "Newcastle", "lat": -32.8842, "lon": 151.7289, "elev": 18.5, "status": "inactive", "kgc": "Cfa"},
     "NYA": {"name": "Ny-Ålesund", "lat": 78.9227, "lon": 11.9273, "elev": 11.0, "status": "active", "kgc": "ET"},
