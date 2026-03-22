@@ -10,120 +10,96 @@ CRS 与 McClear 均在 SoDa 上提供（相同 ``api.soda-solardata.com`` WPS �
 
 import io
 import math
+import re
 import pandas as pd
 import requests
+from huggingface_hub import hf_hub_url
 from bsrn.constants import (
     BSRN_STATIONS,
     CRS_API_HOST,
     CRS_HF_REPO_ID,
-    CRS_HIMAWARI_EARTH_DISK_RADIUS_DEG,
-    CRS_HIMAWARI_MIN_START_UTC,
-    CRS_HIMAWARI_SUBSATELLITE_LAT_DEG,
-    CRS_HIMAWARI_SUBSATELLITE_LON_DEG,
     CRS_INTEGRATED_COLUMNS,
-    CRS_MAINTAINER_EMAIL,
-    CRS_MSG_EARTH_DISK_RADIUS_DEG,
-    CRS_MSG_MIN_START_UTC,
-    CRS_MSG_SUBSATELLITE_LAT_DEG,
-    CRS_MSG_SUBSATELLITE_LON_DEG,
+    HF_MAINTAINER_EMAIL,
     CRS_OUTPUT_COLUMNS,
     CRS_VARIABLE_MAP,
+    CRS_HIMAWARI_MIN_START_UTC,
+    CRS_MSG_MIN_START_UTC,
 )
+from bsrn.physics.geometry import in_satellite_disk
+from bsrn.io.retrieval import get_bsrn_file_inventory, months_from_ftp_filenames
+
+# ---------------------------------------------------------------------------
+#  Private helpers / 内部辅助函数
+# ---------------------------------------------------------------------------
+
+def _crs_min_start_utc(latitude, longitude):
+    """
+    Get the earliest allowed CRS start date [UTC] for a given site.
+    获取给定站点最早允许的 CRS 起始日期 [UTC]。
+
+    Parameters
+    ----------
+    latitude : float
+        Site latitude. [degrees]
+    longitude : float
+        Site longitude. [degrees]
+
+    Returns
+    -------
+    min_start : pd.Timestamp or None
+        The earliest start date, or None if the site is outside all disks.
+        最早起始日期，若不在圆盘范围内则返回 None。
+    """
+    in_himawari = in_satellite_disk(latitude, longitude, "Himawari")
+    in_msg = in_satellite_disk(latitude, longitude, "MSG")
+
+    if not in_himawari and not in_msg:
+        return None
+
+    # Earliest allowed start: union of applicable satellite minima (favor earliest)
+    # 适用卫星最早日期的并集（优先取较早者，即各适用的最小值中最小）
+    candidates = []
+    if in_himawari:
+        candidates.append(pd.Timestamp(CRS_HIMAWARI_MIN_START_UTC))
+    if in_msg:
+        candidates.append(pd.Timestamp(CRS_MSG_MIN_START_UTC))
+
+    return min(candidates)
 
 
-def _check_crs_coverage(latitude: float, longitude: float, start) -> None:
+def _check_crs_coverage(latitude, longitude, start):
     """
     Require the site inside the Himawari or MSG **60° reliability disk** and *start* not
-    before the applicable minimum (see :mod:`bsrn.constants`).
+    before the applicable minimum.
     要求站点落在 Himawari 或 MSG 的 **60° 可靠性圆盘**内，且 *start* 不早于对应最早日期。
 
     Parameters
     ----------
     latitude : float
         Site latitude. [degrees]
-        站点纬度 [度]。
     longitude : float
         Site longitude. [degrees]
-        站点经度 [度]。
     start : datetime-like
-        Request period start (naive or tz-aware; compared in UTC calendar sense for min-date check).
-        请求起始时间（无时区或带时区；与最早允许日期的比较按 UTC 日历语义）。
-
-    Returns
-    -------
-    None
+        Request period start.
 
     Raises
     ------
     ValueError
         If the site is outside both satellite disks or *start* is before the required minimum.
-        站点不在任一盘内，或 *start* 早于要求的最小日期时。
-
-    References
-    ----------
-    .. [1] CAMS radiation service — SoDa.
-       https://www.soda-pro.com/web-services/radiation/cams-radiation-service
     """
+    min_start = _crs_min_start_utc(latitude, longitude)
+    if min_start is None:
+        raise ValueError(
+            "Site is outside the Himawari (140.7°E) and MSG (0°E) 60° reliability disks. / "
+            "站点不在 Himawari 与 MSG 的 60° 可靠性圆盘内。"
+        )
+
     # Compare *start* as UTC-naive timestamp / 将起始时间规范为 UTC 无时区以便与常量日期比较
     start_ts = pd.Timestamp(start)
     if start_ts.tzinfo is not None:
         start_cmp = start_ts.tz_convert("UTC").tz_localize(None)
     else:
         start_cmp = start_ts
-
-    def _central_angle_deg(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
-        """
-        Great-circle central angle between two surface points. [degrees]
-        两点间大圆中心角 [度]。
-        """
-        rlat1 = math.radians(lat1)
-        rlat2 = math.radians(lat2)
-        dlat = math.radians(lat2 - lat1)
-        dlon = math.radians(lon2 - lon1)
-        # Haversine half-chord squared, clamped for numerical stability
-        # Haversine 半弦平方，夹紧以保证数值稳定
-        h = (
-            math.sin(dlat / 2) ** 2
-            + math.cos(rlat1) * math.cos(rlat2) * math.sin(dlon / 2) ** 2
-        )
-        return 2 * math.degrees(math.asin(math.sqrt(min(1.0, max(0.0, h)))))
-
-    def _in_disk(lat: float, lon: float, sslat: float, sslon: float, radius_deg: float) -> bool:
-        """
-        True if (lat, lon) is within *radius_deg* of subsatellite point.
-        若 (lat, lon) 在星下点 *radius_deg* 内则为 True。
-        """
-        return _central_angle_deg(lat, lon, sslat, sslon) <= radius_deg
-
-    # Himawari vs MSG footprint from constants / 由常量定义的两颗卫星覆盖圆盘
-    in_himawari = _in_disk(
-        latitude,
-        longitude,
-        CRS_HIMAWARI_SUBSATELLITE_LAT_DEG,
-        CRS_HIMAWARI_SUBSATELLITE_LON_DEG,
-        CRS_HIMAWARI_EARTH_DISK_RADIUS_DEG,
-    )
-    in_msg = _in_disk(
-        latitude,
-        longitude,
-        CRS_MSG_SUBSATELLITE_LAT_DEG,
-        CRS_MSG_SUBSATELLITE_LON_DEG,
-        CRS_MSG_EARTH_DISK_RADIUS_DEG,
-    )
-
-    if not in_himawari and not in_msg:
-        raise ValueError(
-            "Site is outside the Himawari and MSG 60° reliability disks "
-            "(see CRS_HIMAWARI_* and CRS_MSG_* in bsrn.constants). / "
-            "站点不在 Himawari 与 MSG 的 60° 可靠性圆盘内（见 bsrn.constants）。"
-        )
-
-    # Earliest allowed *start*: union of applicable satellite minima / 各适用卫星最早日期的并集（取最大）
-    min_start = pd.Timestamp(CRS_MSG_MIN_START_UTC)
-    if in_himawari:
-        min_start = max(min_start, pd.Timestamp(CRS_HIMAWARI_MIN_START_UTC))
-    if in_msg:
-        min_start = max(min_start, pd.Timestamp(CRS_MSG_MIN_START_UTC))
 
     if start_cmp < min_start:
         raise ValueError(
@@ -165,7 +141,7 @@ def _parse_crs(raw_or_buffer):
     else:
         fbuf = raw_or_buffer
 
-    # Skip preamble until column-name row / 跳过前言直至含列名的 “# Observation period” 行
+    # Skip preamble until column-name row / 跳过前言直至含列名的 "# Observation period" 行
     while True:
         line = fbuf.readline()
         if not line:
@@ -178,9 +154,9 @@ def _parse_crs(raw_or_buffer):
     data = pd.read_csv(fbuf, sep=";", comment="#", header=None, names=names)
     # Interval bounds from first column / 从首列解析观测时段起止
     obs_period = data["Observation period"].str.split("/")
-    # Using the second part of the period (end-time) for ceiling-style labeling.
-    # 使用时段的第二部分（结束时间）进行向上对齐（ceiling）风格的标记。
-    data.index = pd.to_datetime(obs_period.str[1], utc=True)
+    # Using the first part of the period (start-time) for floor-style labeling.
+    # 使用时段的第一部分（起始时间）进行向下对齐（floor）风格的标记。
+    data.index = pd.to_datetime(obs_period.str[0], utc=True)
 
     # SoDa integrated irradiance → mean irradiance over the step / 积分量转为步长内平均辐照度 [W/m²]
     integrated_cols = [c for c in CRS_INTEGRATED_COLUMNS if c in data.columns]
@@ -188,7 +164,7 @@ def _parse_crs(raw_or_buffer):
     hours = time_delta.dt.total_seconds() / 3600.0
     data[integrated_cols] = data[integrated_cols].divide(hours.tolist(), axis="rows")
 
-    data.index.name = None
+    data.index.name = None # Remove index name / 移除索引名
     data = data.rename(columns=CRS_VARIABLE_MAP)
     missing = [c for c in CRS_OUTPUT_COLUMNS if c not in data.columns]
     if missing:
@@ -197,6 +173,220 @@ def _parse_crs(raw_or_buffer):
             f"{missing}. / 重命名后缺少列：{missing}。"
         )
     return data[CRS_OUTPUT_COLUMNS].copy()
+
+
+def _hf_fetch_to_memory(repo_id, filename):
+    """
+    Fetch a file from Hugging Face Hub directly to memory (bytes).
+    从 Hugging Face Hub 直接获取文件到内存（字节）。
+
+    Parameters
+    ----------
+    repo_id : str
+        Hugging Face repository ID (e.g., "dazhiyang/bsrn-v1").
+        Hugging Face 仓库 ID。
+    filename : str
+        Path within the repository (e.g., "qiq/qiq0624_crs.parquet").
+        仓库内的文件路径。
+
+    Returns
+    -------
+    content : bytes
+        Raw file bytes.
+        原始文件字节。
+    """
+    print(f"Fetching CRS from Hugging Face: {filename}")
+    try:
+        url = hf_hub_url(
+            repo_id=repo_id, filename=filename, repo_type="dataset"
+        )
+        resp = requests.get(url, timeout=60)
+        resp.raise_for_status()
+        return resp.content
+    except requests.HTTPError as e:
+        if e.response is not None and e.response.status_code == 404:
+            raise FileNotFoundError(
+                f"{filename} is not yet on huggingface, please contact the maintainer "
+                f"Dazhi Yang at {HF_MAINTAINER_EMAIL} for update."
+            ) from e
+        raise FileNotFoundError(
+            f"{filename} is not yet on huggingface, please contact the maintainer "
+            f"Dazhi Yang at {HF_MAINTAINER_EMAIL} for update."
+        ) from e
+    except Exception as e:
+        raise FileNotFoundError(
+            f"{filename} is not yet on huggingface, please contact the maintainer "
+            f"Dazhi Yang at {HF_MAINTAINER_EMAIL} for update."
+        ) from e
+
+
+def _fetch_crs_from_hf(station_code, index):
+    """
+    Fetch raw bytes from Hugging Face for the months required by the index.
+    从 Hugging Face 获取索引所需月份的原始字节。
+
+    Parameters
+    ----------
+    station_code : str
+        BSRN station code (case-insensitive).
+        BSRN 站点代码（大小写不敏感）。
+    index : pd.DatetimeIndex
+        Non-empty target index; months present determine which files are fetched.
+        非空目标索引；出现的月份决定拉取哪些文件。
+
+    Returns
+    -------
+    contents : list of bytes
+        One element per month, in sorted order.
+        每月一个元素，按日期排序。
+
+    Raises
+    ------
+    ValueError
+        If index is empty.
+        index 为空时。
+    """
+    if index.empty:
+        raise ValueError("index must not be empty. / index 不能为空。")
+    stn = station_code.lower()
+
+    # With floor-labeling (start-of-interval), the month in the index directly 
+    # determines which monthly file we need to fetch.
+    # 使用向下对齐（floor，时段开始）标记后，索引中的月份直接决定了需要获取的月度文件。
+    unique_months = sorted(set(zip(index.year, index.month)))
+
+    contents = [] # Accumulate raw bytes / 累积原始字节
+    for year, month in unique_months:
+        yy = str(year)[2:]
+        mm = f"{month:02d}"
+        # Monthly filename format: qiq0124_crs.parquet / 月度文件格式：qiq0124_crs.parquet
+        filename = f"{stn}{mm}{yy}_crs.parquet"
+        hf_filename = f"{stn}/{filename}"
+        content = _hf_fetch_to_memory(CRS_HF_REPO_ID, hf_filename)
+        contents.append(content)
+    return contents
+
+
+def _load_crs_parquet(path_or_bytes):
+    """
+    Load one CRS parquet into a UTC-indexed DataFrame.
+    将单个 CRS parquet 加载为 UTC 索引的 DataFrame。
+
+    Parameters
+    ----------
+    path_or_bytes : str, path-like, bytes, or file-like
+        Path to the parquet file, or bytes content, or file-like object.
+        parquet 文件路径、字节内容或类文件对象。
+
+    Returns
+    -------
+    data : pd.DataFrame
+        CRS data with columns ghi_crs, bni_crs, dhi_crs and UTC DatetimeIndex.
+        含 ghi_crs、bni_crs、dhi_crs 列及 UTC DatetimeIndex 的 CRS 数据。
+    """
+    if isinstance(path_or_bytes, bytes):
+        path_or_bytes = io.BytesIO(path_or_bytes)
+    data = pd.read_parquet(path_or_bytes)
+    if not isinstance(data.index, pd.DatetimeIndex):
+        raise ValueError("CRS parquet must have DatetimeIndex. / CRS parquet 必须有 DatetimeIndex。")
+    if data.index.tz is None:
+        data.index = data.index.tz_localize("UTC") # Localize to UTC / 规范化为 UTC 时区
+    else:
+        data.index = data.index.tz_convert("UTC") # Convert to UTC / 转换为 UTC 时区
+    return data
+
+
+# ---------------------------------------------------------------------------
+#  Public API / 公开接口
+# ---------------------------------------------------------------------------
+
+def check_crs_availability(stations, username, password):
+    """
+    Check which BSRN stations are geographically covered by CAMS Radiation Service (CRS)
+    **and** have BSRN archive files overlapping the CRS temporal range.
+    检查哪些 BSRN 站点在 CAMS 辐射服务 (CRS) 的地理覆盖范围内，**且**其 BSRN 存档文件
+    与 CRS 的年份范围存在交集。
+
+    Workflow:
+    1. Filter *stations* by spatial coverage (MSG and Himawari disks).
+    2. Query BSRN FTP for the covered subset to obtain file inventories.
+    3. Extract years from filenames and intersect with the CRS year range.
+
+    Parameters
+    ----------
+    stations : list of str
+        BSRN station codes to check (e.g. ``['BIL', 'BON', 'DRA']``).
+        要检查的 BSRN 站点代码。
+    username : str
+        BSRN FTP username.
+        BSRN FTP 用户名。
+    password : str
+        BSRN FTP password.
+        BSRN FTP 密码。
+
+    Returns
+    -------
+    availability : dict
+        A dictionary mapping station codes to availability metadata:
+        ``{station_code: {'years': [list of years], 'months': [list of (y,m) tuples]}}``.
+        ``years`` is used for bulk API downloads, and ``months`` for monthly 
+        parquet writing. Stations with no overlap are omitted.
+        ``{站点代码: {'years': [年份列表], 'months': [(年, 月) 元组列表]}}``。
+        ``years`` 用于批量下载，``months`` 用于生成月度 parquet。无交集站点被省略。
+    """
+    # Mission start years for MSG and Himawari / MSG 与 Himawari 的任务起始年份
+    y_min_msg = 2004
+    y_min_hima = 2016
+    y_max = pd.Timestamp.now(tz="UTC").year
+
+    # Step 1: geographic filter / 地理覆盖过滤
+    covered = {}  # maps station to its min_year
+    for code in stations:
+        code_upper = code.upper()
+        if code_upper not in BSRN_STATIONS:
+            continue
+        meta = BSRN_STATIONS[code_upper]
+        lat, lon = meta["lat"], meta["lon"]
+
+        # Use library logic to determine coverage and minimum start date
+        # 使用统一逻辑确定覆盖范围及最早日期
+        in_msg = in_satellite_disk(lat, lon, "MSG")
+        in_hima = in_satellite_disk(lat, lon, "Himawari")
+
+        if in_msg or in_hima:
+            # Union of applicable satellite minima / 适用卫星最早日期的并集
+            min_y = y_min_msg
+            if in_hima and not in_msg:
+                min_y = y_min_hima
+            elif in_hima and in_msg:
+                min_y = min(y_min_msg, y_min_hima)
+            covered[code_upper] = min_y
+
+    if not covered:
+        return {}
+
+    # Step 2: FTP inventory for covered stations / 查询覆盖站点的 FTP 文件清单
+    inventory = get_bsrn_file_inventory(list(covered.keys()), username, password)
+
+    # Step 3: extract years and intersect with CRS range / 提取年份并与 CRS 范围取交集
+    availability = {}
+    for stn, files in inventory.items():
+        stn_upper = stn.upper()
+        min_y = covered[stn_upper]
+        
+        # Standardize month extraction / 标准化月份提取
+        all_months = months_from_ftp_filenames(files)
+        ym_filtered = [(y, m) for y, m in all_months if min_y <= y <= y_max]
+
+        if ym_filtered:
+            unique_years = sorted(list(set(y for y, m in ym_filtered)))
+            # Store metadata for station / 存储站点的元数据
+            availability[stn_upper] = {
+                "years": unique_years,
+                "months": sorted_ym
+            }
+
+    return availability
 
 
 def download_crs(latitude, longitude, start, end, email, elev=None, summarization="PT01H", timeout=30):
@@ -256,11 +446,11 @@ def download_crs(latitude, longitude, start, end, email, elev=None, summarizatio
 
     References
     ----------
-    .. [1] Schroedter-Homscheidt, M., et al. (2016). CAMS radiation service.
+    .. [1] Schroedter-Homscheidt, M., et al. (2016). User's Guide to the CAMS Radiation Service.
        European Commission.
     """
     if elev is None:
-        elev = -999
+        elev = -999 # Default to terrain lookup / 默认采用地形查找
 
     _check_crs_coverage(latitude, longitude, start)
 
@@ -337,144 +527,6 @@ def download_crs(latitude, longitude, start, end, email, elev=None, summarizatio
         raise ValueError(
             "SoDa CRS returned no data rows. / SoDa CRS 未返回数据行。"
         )
-    return data
-
-
-def _hf_fetch_to_memory(repo_id, filename):
-    """
-    Fetch a file from Hugging Face Hub directly to memory (bytes).
-    从 Hugging Face Hub 直接获取文件到内存（字节）。
-
-    Parameters
-    ----------
-    repo_id : str
-        Hugging Face repository ID (e.g., "dazhiyang/bsrn-v1").
-        Hugging Face 仓库 ID。
-    filename : str
-        Path within the repository (e.g., "qiq/qiq0624_crs.parquet").
-        仓库内的文件路径。
-
-    Returns
-    -------
-    content : bytes
-        Raw file bytes.
-        原始文件字节。
-
-    Raises
-    ------
-    ImportError
-        If huggingface_hub is not installed.
-        未安装 huggingface_hub 时。
-    FileNotFoundError
-        On 404 or other fetch failure; message includes maintainer contact.
-        404 或其他获取失败时；信息含维护者联系方式。
-    """
-    try:
-        from huggingface_hub import hf_hub_url
-    except ImportError:
-        raise ImportError(
-            "huggingface_hub is required for CRS. Install with: pip install huggingface_hub"
-        )
-
-    print(f"Fetching CRS from Hugging Face: {filename}")
-    try:
-        url = hf_hub_url(
-            repo_id=repo_id, filename=filename, repo_type="dataset"
-        )
-        resp = requests.get(url, timeout=60)
-        resp.raise_for_status()
-        return resp.content
-    except requests.HTTPError as e:
-        if e.response is not None and e.response.status_code == 404:
-            raise FileNotFoundError(
-                f"{filename} is not yet on huggingface, please contact the maintainer "
-                f"Dazhi Yang at {CRS_MAINTAINER_EMAIL} for update."
-            ) from e
-        raise FileNotFoundError(
-            f"{filename} is not yet on huggingface, please contact the maintainer "
-            f"Dazhi Yang at {CRS_MAINTAINER_EMAIL} for update."
-        ) from e
-    except Exception as e:
-        raise FileNotFoundError(
-            f"{filename} is not yet on huggingface, please contact the maintainer "
-            f"Dazhi Yang at {CRS_MAINTAINER_EMAIL} for update."
-        ) from e
-
-
-def _fetch_crs_from_hf(station_code, index):
-    """
-    Fetch raw bytes from Hugging Face for the months required by the index.
-    从 Hugging Face 获取索引所需月份的原始字节。
-
-    Parameters
-    ----------
-    station_code : str
-        BSRN station code (case-insensitive).
-        BSRN 站点代码（大小写不敏感）。
-    index : pd.DatetimeIndex
-        Non-empty target index; months present determine which files are fetched.
-        非空目标索引；出现的月份决定拉取哪些文件。
-
-    Returns
-    -------
-    contents : list of bytes
-        One element per month, in sorted order.
-        每月一个元素，按日期排序。
-
-    Raises
-    ------
-    ValueError
-        If index is empty.
-        index 为空时。
-    """
-    if index.empty:
-        raise ValueError("index must not be empty. / index 不能为空。")
-    stn = station_code.lower()
-
-    # We use a shift to correctly handle ceiling-aligned labels at month boundaries.
-    # Labels at the exact start of a month (e.g. 00:00:00) belong to the PREVIOUS month.
-    # 使用偏移来正确处理月份边界处的向上对齐标签；整月起始点（如 00:00:00）属于前一个月。
-    shifted_index = index.shift(-1, freq="s")
-    unique_months = sorted(set(zip(shifted_index.year, shifted_index.month)))
-
-    contents = []
-    for year, month in unique_months:
-        yy = str(year)[2:]
-        mm = f"{month:02d}"
-        # Monthly filename format: qiq0124_crs.parquet / 月度文件格式：qiq0124_crs.parquet
-        filename = f"{stn}{mm}{yy}_crs.parquet"
-        hf_filename = f"{stn}/{filename}"
-        content = _hf_fetch_to_memory(CRS_HF_REPO_ID, hf_filename)
-        contents.append(content)
-    return contents
-
-
-def _load_crs_parquet(path_or_bytes):
-    """
-    Load one CRS parquet into a UTC-indexed DataFrame.
-    将单个 CRS parquet 加载为 UTC 索引的 DataFrame。
-
-    Parameters
-    ----------
-    path_or_bytes : str, path-like, bytes, or file-like
-        Path to the parquet file, or bytes content, or file-like object.
-        parquet 文件路径、字节内容或类文件对象。
-
-    Returns
-    -------
-    data : pd.DataFrame
-        CRS data with columns ghi_crs, bni_crs, dhi_crs and UTC DatetimeIndex.
-        含 ghi_crs、bni_crs、dhi_crs 列及 UTC DatetimeIndex 的 CRS 数据。
-    """
-    if isinstance(path_or_bytes, bytes):
-        path_or_bytes = io.BytesIO(path_or_bytes)
-    data = pd.read_parquet(path_or_bytes)
-    if not isinstance(data.index, pd.DatetimeIndex):
-        raise ValueError("CRS parquet must have DatetimeIndex. / CRS parquet 必须有 DatetimeIndex。")
-    if data.index.tz is None:
-        data.index = data.index.tz_localize("UTC")
-    else:
-        data.index = data.index.tz_convert("UTC")
     return data
 
 
@@ -587,4 +639,3 @@ def add_crs_columns(df, station_code=None, lat=None, lon=None, elev=None):
     for col in crs_data.columns:
         df[col] = crs_data[col]
     return df
-

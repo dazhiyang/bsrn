@@ -8,7 +8,7 @@ Provides high-precision solar position and extraterrestrial radiation.
 import pandas as pd
 import numpy as np
 from bsrn.physics import spa
-from bsrn.constants import BSRN_STATIONS
+from bsrn.constants import BSRN_STATIONS, GEO_SATELLITE_LAT_DEG, GEO_SATELLITE_LON_DEG, GEO_SATELLITE_DISK_RADIUS_DEG
 
 
 def get_pressure_from_elevation(elev):
@@ -266,7 +266,80 @@ def add_solpos_columns(df, station_code=None, lat=None, lon=None, elev=None):
     df["azimuth"] = solpos["azimuth"]
     
     df["bni_extra"] = get_bni_extra(df.index)
-    df["ghi_extra"] = get_ghi_extra(df.index, df["zenith"])
-    
-    return df
 
+
+# ---------------------------------------------------------------------------
+#  Geographic helpers / 地理辅助函数
+# ---------------------------------------------------------------------------
+
+def _central_angle_deg(lat1, lon1, lat2, lon2):
+    """
+    Great-circle central angle between two surface points using the Haversine formula. [degrees]
+    使用 Haversine 公式计算两点间的大圆中心角 [度]。
+
+    Parameters
+    ----------
+    lat1 : float or numeric
+        Latitude of the first point. [degrees]
+        第一点纬度 [度]。
+    lon1 : float or numeric
+        Longitude of the first point. [degrees]
+        第一点经度 [度]。
+    lat2 : float or numeric
+        Latitude of the second point. [degrees]
+        第二点纬度 [度]。
+    lon2 : float or numeric
+        Longitude of the second point. [degrees]
+        第二点经度 [度]。
+
+    Returns
+    -------
+    angle : float or numeric
+        Central angle in degrees.
+        大圆中心角 [度]。
+    """
+    # Convert degrees to radians / 将角度转换为弧度
+    rlat1 = np.radians(lat1)
+    rlat2 = np.radians(lat2)
+    dlat = np.radians(lat2 - lat1)
+    dlon = np.radians(lon2 - lon1)
+
+    # Haversine half-chord squared / Haversine 半弦平方
+    h = (
+        np.sin(dlat / 2) ** 2
+        + np.cos(rlat1) * np.cos(rlat2) * np.sin(dlon / 2) ** 2
+    )
+    # Return central angle / 返回大圆中心角 [度]
+    return 2 * np.degrees(np.arcsin(np.sqrt(np.clip(h, 0.0, 1.0))))
+
+
+def in_satellite_disk(lat, lon, sat_key):
+    """
+    True if (lat, lon) falls within the Earth-disk radius (approx. 60 deg) of the satellite.
+    若 (lat, lon) 在该卫星地球圆盘半径（约 60 度）内则为 True。
+
+    Parameters
+    ----------
+    lat : float or numeric
+        Latitude. [degrees]
+        纬度 [度]。
+    lon : float or numeric
+        Longitude. [degrees]
+        经度 [度]。
+    sat_key : str
+        Satellite key in ``bsrn.constants.GEO_SATELLITES`` (e.g., 'Himawari', 'MSG').
+        卫星名称键值。
+
+    Returns
+    -------
+    covered : bool or boolean array
+        True if covered, False otherwise.
+        若在覆盖范围内则返回 True，否则返回 False。
+    """
+    # Calculate angular distance to the sub-satellite point / 计算到本星下点的大圆角度
+    angle = _central_angle_deg(
+        lat, lon,
+        GEO_SATELLITE_LAT_DEG, GEO_SATELLITE_LON_DEG[sat_key],
+    )
+    # Check if within the 60° reliability limit / 检查是否在 60 度的可靠覆盖范围内
+    return angle <= GEO_SATELLITE_DISK_RADIUS_DEG

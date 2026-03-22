@@ -7,11 +7,19 @@ Handles FTP connections and automated downloads.
 """
 
 import os
+import re
 import time
+import pandas as pd
 from ftplib import FTP
+from bsrn.constants import BSRN_FTP_HOST
 
 
-def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"):
+BSRN_FILENAME_PATTERN = re.compile(
+    r"([a-zA-Z0-9]{3})(\d{2})(\d{2})\.(?:dat\.gz|\d{3}).*", re.IGNORECASE
+)
+
+
+def get_bsrn_file_inventory(stations, username, password, host=BSRN_FTP_HOST):
     """
     Connects to bsrn ftp and lists available station-to-archive files.
     连接到 BSRN FTP 并列出可用的站点存档文件。
@@ -60,7 +68,14 @@ def get_bsrn_file_inventory(stations, username, password, host="ftp.bsrn.awi.de"
                         ftp.cwd("/")
                         ftp.cwd(stn_lower)
 
-                        inventory[stn.upper()] = ftp.nlst()
+                        files = ftp.nlst()
+                        # Filter to include only station-to-archive files and exclude directories
+                        # 仅保留站点存档文件并排除目录（如 OldVersion 等）
+                        inventory[stn.upper()] = [
+                            f for f in files 
+                            if f.lower().endswith(".dat.gz") or 
+                            (len(f) > 4 and f[-4:].startswith(".") and f[-3:].isdigit())
+                        ]
                         success = True
                         break
                     except Exception as e:
@@ -294,3 +309,64 @@ def download_bsrn_files(filenames, local_dir, username, password, host="ftp.bsrn
                 pass
 
     return downloaded_paths
+
+
+def parse_bsrn_filename(filename):
+    """
+    Extract station code, year, and month from a BSRN archive filename.
+    从 BSRN 存档文件名中提取站点代码、年份和月份。
+
+    Parameters
+    ----------
+    filename : str
+        BSRN filename (e.g., 'pay0123.dat.gz' or 'qiq0224.004').
+        BSRN 文件名。
+
+    Returns
+    -------
+    station : str or None
+        3-letter station code (uppercase). / 3 位站点代码（大写）。
+    year : int or None
+        4-digit year (e.g., 2023). / 4 位年份。
+    month : int or None
+        Month (1-12). / 月份。
+    """
+    match = BSRN_FILENAME_PATTERN.match(filename)
+    if not match:
+        return None, None, None
+
+    # Get components / 提取各组件
+    station = match.group(1).upper()
+    month = int(match.group(2))
+    yy = int(match.group(3))
+
+    # BSRN convention: 00-79 -> 2000-2079, 80-99 -> 1980-1999
+    # BSRN 惯例：00-79 对应 2000-2079，80-99 对应 1980-1999
+    year = 2000 + yy if yy < 80 else 1900 + yy
+
+    return station, year, month
+
+
+def months_from_ftp_filenames(filenames):
+    """
+    Extract a unique set of (year, month) tuples from a list of BSRN filenames.
+    从 BSRN 文件名列表中提取唯一的 (年, 月) 元组集合。
+
+    Parameters
+    ----------
+    filenames : list of str
+        List of filenames from BSRN FTP.
+        BSRN FTP 文件名列表。
+
+    Returns
+    -------
+    months : list of tuple
+        Sorted list of (year, month) tuples.
+        排序后的 (年, 月) 元组列表。
+    """
+    ym_set = set()
+    for f in filenames:
+        _, y, m = parse_bsrn_filename(f)
+        if y is not None:
+            ym_set.add((y, m))
+    return sorted(list(ym_set))

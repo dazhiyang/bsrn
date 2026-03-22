@@ -81,9 +81,23 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
         labels = columns
 
     df = df.sort_index()
-    # For ceiling-aligned data, the last label might be the 1st of the next month.
     clean_idx = df.index.tz_localize(None) if df.index.tz is not None else df.index
-    unique_months = clean_idx.shift(-1, freq="s").to_period("M").unique()
+    
+    # Automatically slice to the most frequent month to handle boundary effects from averaging
+    # 自动切分到出现频率最高的月份，以处理由于平均产生的边界效应
+    all_months = clean_idx.to_period("M")
+    if all_months.empty:
+        raise ValueError("DataFrame index is empty. / DataFrame 索引为空。")
+    
+    target_month = pd.Series(all_months).mode()[0]
+    if len(all_months.unique()) > 1:
+        mask = all_months == target_month
+        df = df[mask].copy()
+        clean_idx = clean_idx[mask]
+        import warnings
+        warnings.warn(f"Automatically sliced input DataFrame to target month: {target_month}")
+
+    unique_months = clean_idx.to_period("M").unique()
     if len(unique_months) != 1:
         raise ValueError(f"Found multiple months based on interval coverage: {list(unique_months)}")
 

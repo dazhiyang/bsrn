@@ -10,7 +10,7 @@ import io
 import pandas as pd
 import requests
 
-from bsrn.constants import MERRA2_HF_REPO_ID, MERRA2_MAINTAINER_EMAIL
+from bsrn.constants import MERRA2_HF_REPO_ID, HF_MAINTAINER_EMAIL
 
 
 def _hf_fetch_to_memory(repo_id, filename):
@@ -60,16 +60,16 @@ def _hf_fetch_to_memory(repo_id, filename):
         if e.response is not None and e.response.status_code == 404:
             raise FileNotFoundError(
                 f"{filename} is not yet on huggingface, please contact the maintainer "
-                f"Dazhi Yang at {MERRA2_MAINTAINER_EMAIL} for update."
+                f"Dazhi Yang at {HF_MAINTAINER_EMAIL} for update."
             ) from e
         raise FileNotFoundError(
             f"{filename} is not yet on huggingface, please contact the maintainer "
-            f"Dazhi Yang at {MERRA2_MAINTAINER_EMAIL} for update."
+            f"Dazhi Yang at {HF_MAINTAINER_EMAIL} for update."
         ) from e
     except Exception as e:
         raise FileNotFoundError(
             f"{filename} is not yet on huggingface, please contact the maintainer "
-            f"Dazhi Yang at {MERRA2_MAINTAINER_EMAIL} for update."
+            f"Dazhi Yang at {HF_MAINTAINER_EMAIL} for update."
         ) from e
 
 

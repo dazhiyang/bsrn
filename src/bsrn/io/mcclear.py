@@ -56,9 +56,9 @@ def _parse_mcclear(raw_or_buffer):
     
     # Interval bounds from first column / 从首列解析观测时段起止
     obs_period = data["Observation period"].str.split("/")
-    # Using the second part of the period (end-time) for ceiling-style labeling. 
-    # 使用时段的第二部分（结束时间）进行向上对齐（ceiling）风格的标记。
-    data.index = pd.to_datetime(obs_period.str[1], utc=True)
+    # Using the first part of the period (start-time) for floor-style labeling. 
+    # 使用时段的第一部分（起始时间）进行向下对齐（floor）风格的标记。
+    data.index = pd.to_datetime(obs_period.str[0], utc=True)
 
     # Convert Wh/m^2 to W/m^2 using interval duration / 依据时间区间长度将 Wh/m^2 转换为 W/m^2
     integrated_cols = [c for c in MCCLEAR_INTEGRATED_COLUMNS if c in data.columns]

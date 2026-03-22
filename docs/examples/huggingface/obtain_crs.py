@@ -33,35 +33,46 @@ print(f"Loaded {len(df)} rows from archive.")
 print("Calculating solar geometry...")
 df = bsrn.physics.geometry.add_solpos_columns(df, station_code=station_code)
 
-# 4. Add REST2 clear-sky columns (fetches MERRA-2 from Hugging Face)
+# 4. Run QC suite and mask failed rows
+# 运行 QC 套件并遮掩失败行
+print("Running QC suite...")
+df = bsrn.qc.wrapper.run_qc(df, station_code=station_code)
+
+print("Masking data that failed any QC test as NaN...")
+flag_cols = [c for c in df.columns if c.startswith("flag")]
+bad_mask = df[flag_cols].sum(axis=1) > 0
+irradiance_cols = ["ghi", "bni", "dhi"]
+irradiance_cols = [c for c in irradiance_cols if c in df.columns]
+df.loc[bad_mask, irradiance_cols] = pd.NA
+print(f"Masked {bad_mask.sum()} rows as NaN.")
+
+# Drop flag columns after they've been used for masking
+# 使用完成后移除 QC 标志列
+df.drop(columns=flag_cols, inplace=True)
+
+# 5. Add REST2 clear-sky columns (fetches MERRA-2 from Hugging Face)
 # 添加 REST2 晴空列（从 Hugging Face 获取 MERRA-2）
 print("Fetching MERRA-2 and adding REST2 clear-sky columns...")
 df = bsrn.modeling.clear_sky.add_clearsky_columns(df, station_code=station_code, model="rest2")
 
-# 5. Run QC suite
-# 运行 QC 套件
-print("Running QC suite...")
-df = bsrn.qc.wrapper.run_qc(df, station_code=station_code)
+# 6. Add CRS all-sky satellite columns (fetches CRS from Hugging Face)
+# CRS data is now 1-minute resolution, so we add it before averaging for precision.
+# 添加 CRS 全天空卫星列（从 Hugging Face 获取）。CRS 已提升至 1 分钟分辨率，建议在平均前加入。
+print("Fetching and adding CRS all-sky columns (1-min)...")
+df = bsrn.io.crs.add_crs_columns(df, station_code=station_code)
 
-print("Removing data that failed any QC test...")
-flag_cols = [c for c in df.columns if c.startswith("flag")]
-df = df[df[flag_cols].sum(axis=1) == 0].copy()
-df.drop(columns=flag_cols, inplace=True)
-print(f"Rows remaining after QC filtering: {len(df)}")
+# 7. Perform time averaging (e.g., 30-min centered average)
+# 执行时间平均（例如，30 分钟居中平均）
+print("Performing 30-min centered time averaging...")
+df_avg = bsrn.utils.pretty_average(
+    df, 
+    rule="30min", 
+    alignment="center",
+    match_ceiling_labels=True
+)
 
-# 6. Perform time averaging (1-hour, ceiling alignment)
-# 执行时间平均（1 小时，向上对齐）
-print("Performing 1-hour time averaging...")
-df_avg = bsrn.utils.pretty_average(df, rule="1h", alignment="ceiling")
-
-# 7. Add CRS all-sky satellite columns (fetches CRS from Hugging Face)
-# CRS data is hourly, so we append it to the averaged DataFrame.
-# 添加 CRS 全天空卫星列（从 Hugging Face 获取 CRS）。CRS 为小时数据，故追加至平均后的 DataFrame。
-print("Fetching and adding CRS all-sky columns...")
-df_avg = bsrn.io.crs.add_crs_columns(df_avg, station_code=station_code)
-
-print("\nProcessing complete. Averaged data with CRS (first 5 rows):")
-print(df_avg.head())
+print("\nProcessing complete. sample averaged data:")
+print(df_avg[['ghi', 'ghi_clear', 'ghi_crs']].head())
 
 # 8. Plot results in a calendar view
 # 绘制日历视图结果
@@ -70,6 +81,8 @@ import bsrn.visualization.calendar
 output_plot = "qiq_hf_comparison.pdf"
 print(f"\nGenerating calendar plot: {output_plot}...")
 
+# Note: plot_calendar expects floor-aligned data (start-of-interval)
+# Note: plot_calendar 期望 start-of-interval 对齐的数据
 bsrn.visualization.calendar.plot_calendar(
     df=df_avg,
     output_file=output_plot,
@@ -77,7 +90,7 @@ bsrn.visualization.calendar.plot_calendar(
     meas_col='ghi',
     clear_col='ghi_clear',
     other_cols=['ghi_crs'],
-    labels=['Measured GHI', 'REST2 Clear-sky GHI', 'CRS Satellite GHI'],
+    labels=['Measured GHI', 'REST2 Clear-sky GHI', 'CAMS CRS Satellite GHI'],
 )
 
 print(f"Plot saved to {output_plot}")
