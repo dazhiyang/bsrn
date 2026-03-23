@@ -1,6 +1,6 @@
 # bsrn
 
-[![PyPI version](https://badge.fury.io/py/bsrn.svg)](https://pypi.org/project/bsrn/)
+[![PyPI version](https://img.shields.io/pypi/v/bsrn.svg?v=0.1.3)](https://pypi.org/project/bsrn/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/bsrn.svg)](https://pypi.org/project/bsrn/)
 [![Documentation Status](https://readthedocs.org/projects/bsrn/badge/?version=latest)](https://bsrn.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://static.pepy.tech/badge/bsrn)](https://pepy.tech/project/bsrn)
@@ -18,20 +18,40 @@ It features automated quality control (QC), high-precision solar geometry, clear
 
 ### Installation
 
-From PyPI (stable release):
+The core `bsrn` package is designed to be lightweight and fast. You can install it using pip:
+
+**From PyPI (stable release):**
 ```bash
 pip install bsrn
 ```
 
-From GitHub (latest development version):
+**From GitHub (latest development version):**
 ```bash
 pip install git+https://github.com/dazhiyang/bsrn.git
 ```
 
-From a local clone (editable install — edits under `src/bsrn/` take effect without reinstalling):
+### Optional Visualization Tools
+If you want to use the built-in plotting features (like data availability charts or clear-sky calendars), you will need to install the optional visualization dependencies (plotnine, matplotlib, and scipy):
+
 ```bash
-cd /path/to/bsrn-qc
-pip install -e .
+pip install bsrn[viz]
+```
+
+## Usage
+For standard quality control and clear-sky modeling, simply import the base package:
+
+```python
+import bsrn
+
+# Access core modules like bsrn.qc, bsrn.modeling, bsrn.io
+```
+
+If you installed the [viz] extra and want to generate plots, you must explicitly import the visualization submodule:
+
+```python
+import bsrn.visualization
+
+# Access plotting tools like bsrn.visualization.calendar.plot_calendar()
 ```
 
 ### Quick Example (Single-File Workflow)
