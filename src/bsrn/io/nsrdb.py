@@ -340,6 +340,7 @@ def download_nsrdb(latitude, longitude, year, api_key, email, variant="conus", t
         "attributes": "ghi,dni,dhi",
         "names": str(year),
         "utc": "true",
+        "leap_day": "true",
         "interval": str(v["interval"]),
         "email": email,
         "affiliation": "BSRN Research",

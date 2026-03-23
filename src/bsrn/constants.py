@@ -441,6 +441,7 @@ NSRDB_VARIANTS = {
         "interval": 30,
         "years": (1998, 2024),
         "satellites": ["GOES-East", "GOES-West"],
+        "bbox": {"lat": (-20, 60), "lon": (-175, -25)},
         "folder": "nsrdb-aggregated",
         "hf_repo_id": NSRDB_AGGREGATED_HF_REPO_ID,
     },

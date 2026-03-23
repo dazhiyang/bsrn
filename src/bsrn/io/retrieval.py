@@ -15,7 +15,8 @@ from bsrn.constants import BSRN_FTP_HOST
 
 
 BSRN_FILENAME_PATTERN = re.compile(
-    r"([a-zA-Z0-9]{3})(\d{2})(\d{2})\.(?:dat\.gz|\d{3}).*", re.IGNORECASE
+    r"([a-zA-Z0-9]{3})(\d{2})(\d{2})(?:[._]([a-z0-9_-]+))?(?:\.dat\.gz|\.\d{3}|\.parquet)",
+    re.IGNORECASE,
 )
 
 
@@ -313,14 +314,14 @@ def download_bsrn_files(filenames, local_dir, username, password, host=BSRN_FTP_
 
 def parse_bsrn_filename(filename):
     """
-    Extract station code, year, and month from a BSRN archive filename.
-    从 BSRN 存档文件名中提取站点代码、年份和月份。
+    Extract station code, year, month, and optional suffix from a filename.
+    从文件名中提取站点代码、年份、月份和（可选）后缀。
 
     Parameters
     ----------
     filename : str
-        BSRN filename (e.g., 'pay0123.dat.gz' or 'qiq0224.004').
-        BSRN 文件名。
+        BSRN filename (e.g., 'pay0123.dat.gz') or parquet (e.g., 'ber0198_crs.parquet').
+        BSRN 文件名或 parquet 文件名。
 
     Returns
     -------
@@ -330,21 +331,25 @@ def parse_bsrn_filename(filename):
         4-digit year (e.g., 2023). / 4 位年份。
     month : int or None
         Month (1-12). / 月份。
+    suffix : str or None
+        Optional suffix (e.g., 'nsrdb_aggregated'). / 可选后缀。
     """
     match = BSRN_FILENAME_PATTERN.match(filename)
     if not match:
-        return None, None, None
+        return None, None, None, None
 
     # Get components / 提取各组件
     station = match.group(1).upper()
     month = int(match.group(2))
     yy = int(match.group(3))
+    suffix = match.group(4)
 
+    # 4-digit year conversion / 4 位年份转换
     # BSRN convention: 00-79 -> 2000-2079, 80-99 -> 1980-1999
     # BSRN 惯例：00-79 对应 2000-2079，80-99 对应 1980-1999
     year = 2000 + yy if yy < 80 else 1900 + yy
 
-    return station, year, month
+    return station, year, month, suffix
 
 
 def months_from_ftp_filenames(filenames):
@@ -366,7 +371,7 @@ def months_from_ftp_filenames(filenames):
     """
     ym_set = set()
     for f in filenames:
-        _, y, m = parse_bsrn_filename(f)
+        _, y, m, _ = parse_bsrn_filename(f)
         if y is not None:
             ym_set.add((y, m))
     return sorted(list(ym_set))
