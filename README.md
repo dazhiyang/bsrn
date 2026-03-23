@@ -110,6 +110,7 @@ Other important features include:
 - **Cloud Enhancement Event (CEE) Detection:** Killinger, Gueymard-style, and Wang methods to detect events when measured GHI significantly exceeds references.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
 - **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
+- **Station-to-archive formatting:** The `bsrn.archiving` subpackage provides logical-record specifications (`LR_SPECS`), Fortran-style validation, and ASCII `get_bsrn_format` output for BSRN header and data records (`LR0001`–`LR4000`), with `BSRNRecord` in `api` and concrete `LR*` classes in `formatter`.
 - **Visualization:** Data availability heatmaps and k vs kt separation plots via the very pretty `plotnine` (which reminds me of the good old R days).
 
 ## 📂 File Structure
@@ -128,6 +129,11 @@ bsrn-qc/
 │   └── bsrn/
 │       ├── __init__.py
 │       ├── constants.py               # Station database, Linke turbidity & physical constants
+│       ├── archiving/                 # Station-to-archive logical records (WRMC-style LR layouts)
+│       │   ├── specs.py               # LR_SPECS + station directory & A3–A7 code tables
+│       │   ├── api.py                 # BSRNRecord (assignment validation); get_azimuth_elevation
+│       │   ├── formatter.py           # LR0001–LR4000 classes, get_bsrn_format, lr0001_format helpers
+│       │   └── validation.py          # Field validators (R validateFunc parity)
 │       ├── io/
 │       │   ├── readers.py             # Read .001, .002 station-to-archive files
 │       │   ├── retrieval.py           # FTP downloads with retries
@@ -286,6 +292,17 @@ from bsrn.visualization.availability import plot_bsrn_availability
 
 fig = plot_bsrn_availability(inventory_df, station_code="QIQ")
 fig.save("availability.png", dpi=300)
+```
+
+### Station-to-archive logical records (`bsrn.archiving`)
+
+Use `LR_SPECS` for field names, formats, and validators; build text with `LR*` classes (`formatter`) or helpers such as `lr0001_format`, `lr0100_data_format`.
+
+```python
+from bsrn.archiving import LR_SPECS, lr0001_format
+
+# Required keys for LR0001 are listed in LR_SPECS["LR0001"]
+# out = lr0001_format({"stationNumber": 94, "month": 1, "year": 2024, "version": 1})
 ```
 
 ## 📜 License

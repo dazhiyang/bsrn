@@ -3,18 +3,18 @@ BSRN archiving: logical-record specs, validation, and R-style helpers.
 
 R reference layout under ``data/R``:
 
-- ``0_data.R`` — table placeholders (A1–A7); Python: ``specs``, ``stations``, ``mappings``
-- ``1_utils.R`` — calendar helpers and bindings; Python: ``utils``, ``api`` (base + ``get_azimuth_elevation``)
-- ``0_bsrnFormats_*.R`` — format strings; Python: ``formatter`` (wrappers) + ``api`` (implementations)
+- ``0_data.R`` — table placeholders (A1–A7); Python: ``specs`` (``LR_SPECS`` + station / code tables)
+- ``1_utils.R`` — calendar helpers and bindings; Python: ``api`` (``get_azimuth_elevation``, …; month length via ``calendar.monthrange`` where needed)
+- ``0_bsrnFormats_*.R`` — format strings; Python: ``formatter`` (``LR*`` classes + ``lr0001_format``, …)
 - ``1_validateFunc_*.R`` — Python: ``validation``
-- ``2_R6Class_*.R`` — Python: ``api`` (``LR0001`` … ``LR4000``)
+- ``2_R6Class_*.R`` — Python: ``formatter`` (``LR0001`` … ``LR4000``); ``api`` (``BSRNRecord``)
 
 BSRN 存档：逻辑记录规范、校验与 R 风格辅助函数。上述 R 文件与 Python 子模块对应关系见源码注释。
 """
 
-from . import api, formatter, mappings, specs, stations, utils, validation
-from .api import (
-    BSRNRecord,
+from . import api, formatter, specs, validation
+from .api import BSRNRecord, get_azimuth_elevation
+from .formatter import (
     LR0001,
     LR0002,
     LR0003,
@@ -26,26 +26,27 @@ from .api import (
     LR0100,
     LR4000,
     LR4000CONST,
-    get_azimuth_elevation,
-    number_of_days,
-    number_of_minutes,
-)
-from .formatter import (
     lr0001_format,
     lr0002_format,
+    lr0003_format,
     lr0004_format,
+    lr0005_format,
+    lr0006_format,
+    lr0007_format,
+    lr0008_format,
     lr0100_data_format,
     lr4000_data_format,
+    lr4000const_format,
 )
-from .mappings import (
+from .specs import (
+    LR_SPECS,
     PYRGEOMETER_BODY,
     PYRGEOMETER_DOME,
     QUANTITIES,
+    STATION_METADATA,
     SURFACES,
     TOPOGRAPHIES,
 )
-from .specs import LR_SPECS
-from .stations import STATION_METADATA
 
 __all__ = [
     "LR_SPECS",
@@ -68,18 +69,19 @@ __all__ = [
     "LR4000",
     "LR4000CONST",
     "get_azimuth_elevation",
-    "number_of_days",
-    "number_of_minutes",
     "lr0001_format",
     "lr0002_format",
+    "lr0003_format",
     "lr0004_format",
+    "lr0005_format",
+    "lr0006_format",
+    "lr0007_format",
+    "lr0008_format",
     "lr0100_data_format",
     "lr4000_data_format",
+    "lr4000const_format",
     "api",
     "formatter",
-    "mappings",
     "specs",
-    "stations",
-    "utils",
     "validation",
 ]

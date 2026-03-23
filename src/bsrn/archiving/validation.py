@@ -1,11 +1,25 @@
+"""
+BSRN logical-record field validators (R ``1_validateFunc_headers.R`` + ``1_validateFunc_datas.R``).
+
+Each ``*_validateFunction`` name matches ``LR_SPECS`` ``validate_func``; ``BSRNRecord`` loads
+the callable by name on field assignment. Code lists come from ``specs`` (``QUANTITIES``, …).
+
+BSRN 逻辑记录字段校验（R ``1_validateFunc_*.R``）。函数名与 ``LR_SPECS`` 中 ``validate_func`` 一致，
+由 ``BSRNRecord`` 在赋值时按名调用；分类编码表见 ``specs``。
+"""
+
+import calendar
 import re
 from datetime import datetime
-from .utils import number_of_minutes
-from .mappings import QUANTITIES, SURFACES, TOPOGRAPHIES, PYRGEOMETER_BODY, PYRGEOMETER_DOME
+
+from .specs import QUANTITIES, SURFACES, TOPOGRAPHIES, PYRGEOMETER_BODY, PYRGEOMETER_DOME
 
 # =============================================================================
-# TRANSLATION OF: 1_validateFunc_headers.R
+# TRANSLATION OF: 1_validateFunc_headers.R — header / metadata fields (LR0001–LR0008)
+# R 对应 ``1_validateFunc_headers.R``：头记录与元数据字段（LR0001–LR0008）
 # =============================================================================
+
+# --- Core Fortran-style checks (I / A / F widths, C numeric, L logical) / 核心 Fortran 风格校验 ---
 
 
 def I_validateFunction(value, digits, v_min=0, v_max=None):
@@ -19,6 +33,7 @@ def I_validateFunction(value, digits, v_min=0, v_max=None):
     if value < v_min or value > v_max:
         raise ValueError(f"must be between {v_min} and {v_max}")
     return int(value)
+
 
 def C_validateFunction(value):
     """Numerical validation function"""
@@ -41,7 +56,7 @@ def F_validateFunction(value, w, d):
         raise ValueError("must be a numerical value")
     s = str(value).split('.')
     if len(s) >= 1:
-        # Subtracting negative sign length from digit count if present
+        # Integer width excludes the minus sign when checking against (w - d). / 校验整数位宽时先去掉负号。
         int_part = s[0].replace('-', '')
         if len(int_part) >= (w - d):
             raise ValueError(f"must be at format F{w}.{d}")
@@ -55,6 +70,10 @@ def L_validateFunction(value):
     if not isinstance(value, bool):
         raise ValueError("must be a logical value (TRUE or FALSE)")
     return value
+
+
+# --- Fixed-width integer tokens (I2 … I8) / 定宽整数（I2 … I8）---
+
 
 def I2_validateFunction(value):
     """I2 validation function"""
@@ -76,6 +95,10 @@ def I8_validateFunction(value):
     """I8 validation function"""
     return I_validateFunction(value, 8)
 
+
+# --- Calendar parts (month, year, day, hour, minute) / 日期时间分量 ---
+
+
 def month_validateFunction(value):
     """month validation function"""
     return I_validateFunction(value, 2, 1, 12)
@@ -95,6 +118,10 @@ def hour_validateFunction(value):
 def minute_validateFunction(value):
     """minute validation function"""
     return I_validateFunction(value, 2, 0, 59)
+
+
+# --- Fixed-width strings (A5 … A80) / 定宽字符串（A5 … A80）---
+
 
 def A5_validateFunction(value):
     """A5 validation function"""
@@ -128,6 +155,10 @@ def A80_validateFunction(value):
     """A80 validation function"""
     return A_validateFunction(value, 80)
 
+
+# --- Contact / network string patterns (telephone, TCP/IP, e-mail) / 联系方式与网络格式 ---
+
+
 def telephone_validateFunction(value):
     """telephone validation function"""
     A_validateFunction(value, 20)
@@ -152,35 +183,43 @@ def email_validateFunction(value):
         raise ValueError("must have a e-mail format")
     return value
 
+
+# --- Encoded fields vs ``specs`` tables (A3–A7) / 与 ``specs`` 编码表对照的字段 ---
+
+
 def quantities_validateFunction(value):
     """radiation quantities measured validation function"""
     if value not in QUANTITIES.values():
-        raise ValueError("must be in A3_quantities (package table)")
+        raise ValueError("must be in A5 quantities (specs.QUANTITIES)")
     return value
 
 def surface_validateFunction(value):
     """surface validation function"""
     if value not in SURFACES.values():
-        raise ValueError("must be in A4_surfaces (package table)")
+        raise ValueError("must be in A4 surfaces (specs.SURFACES)")
     return value
 
 def topography_validateFunction(value):
     """topography type validation function"""
     if value not in TOPOGRAPHIES.values():
-        raise ValueError("must be in A5_topographies (package table)")
+        raise ValueError("must be in A3 topographies (specs.TOPOGRAPHIES)")
     return value
 
 def body_validateFunction(value):
     """pyrgeometer body validation function"""
     if value not in PYRGEOMETER_BODY.values():
-        raise ValueError("must be in A6_pyrgeometers (package table)")
+        raise ValueError("must be in A6 pyrgeometer body (specs.PYRGEOMETER_BODY)")
     return value
 
 def dome_validateFunction(value):
     """pyrgeometer dome validation function"""
     if value not in PYRGEOMETER_DOME.values():
-        raise ValueError("must be in A7_pyrgeometers (package table)")
+        raise ValueError("must be in A7 pyrgeometer dome (specs.PYRGEOMETER_DOME)")
     return value
+
+
+# --- Float formats F7.3 and F12.4 (underscores replace dots in Python names) / 浮点格式 ---
+
 
 def F7_3_validateFunction(value):
     """F7.3 validation function (Renamed to avoid dot in Python func name)"""
@@ -189,6 +228,10 @@ def F7_3_validateFunction(value):
 def F12_4_validateFunction(value):
     """F12.4 validation function (Renamed to avoid dot in Python func name)"""
     return F_validateFunction(value, 12, 4)
+
+
+# --- Lat/lon (F7.3), zenith (I2), horizon comma lists, MM/DD/YY in A8 / 经纬度、天顶角、地平线、A8 日期串 ---
+
 
 def latitude_validateFunction(value):
     """latitude validation function"""
@@ -205,6 +248,7 @@ def longitude_validateFunction(value):
     if not re.search(longitudeRegex, str(value)):
         raise ValueError("must have a longitude format")
     return value
+
 
 def date_validateFunction(value):
     """date validation function"""
@@ -235,10 +279,13 @@ def elevation_validateFunction(value):
         raise ValueError("must have a elevation format (E1,E2,...,En)")
     return value
 
+
 # =============================================================================
-# TRANSLATION OF: 1_validateFunc_datas.R
+# TRANSLATION OF: 1_validateFunc_datas.R — LR0100 / LR4000 minute-series fields
+# R 对应 ``1_validateFunc_datas.R``：LR0100 / LR4000 分钟序列字段
 # =============================================================================
 
+# ``yearMonth`` token (seven chars ``YYYY-MM``). / ``yearMonth`` 七字符 ``YYYY-MM``。
 _YEAR_MONTH_RE = re.compile(r"^(?P<y>\d{4})-(?P<m>\d{2})$")
 
 
@@ -265,7 +312,8 @@ def LR0100_validateFunction(value, yearMonth=None):
     """
     if yearMonth is None:
         return value
-    n = number_of_minutes(yearMonth)
+    y, mo = map(int, yearMonth.split("-"))
+    n = calendar.monthrange(y, mo)[1] * 1440
     if len(value) != n:
         raise ValueError(f"The size of vector must be {n}")
     return value
@@ -278,7 +326,8 @@ def LR4000_validateFunction(value, yearMonth=None):
     """
     if yearMonth is None:
         return value
-    n = number_of_minutes(yearMonth)
+    y, mo = map(int, yearMonth.split("-"))
+    n = calendar.monthrange(y, mo)[1] * 1440
     if len(value) != n:
         raise ValueError(f"The size of vector must be {n}")
     return value
