@@ -22,7 +22,7 @@ from matplotlib.backends.backend_pdf import PdfPages
 import matplotlib.pyplot as plt
 
 from bsrn.constants import BSRN_STATIONS, WONG_PALETTE
-from bsrn.io.readers import read_station_to_archive
+from bsrn.io.reader import read_station_to_archive
 from bsrn.modeling.clear_sky import add_clearsky_columns
 from bsrn.physics.geometry import get_solar_position, get_ghi_extra
 from bsrn.utils import reno_csd, ineichen_csd, lefevre_csd, brightsun_csd

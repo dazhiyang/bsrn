@@ -21,7 +21,7 @@ from plotnine import (
 )
 
 from bsrn.constants import WONG_PALETTE
-from bsrn.io.readers import read_station_to_archive
+from bsrn.io.reader import read_station_to_archive
 from bsrn.modeling.clear_sky import add_clearsky_columns
 
 

@@ -13,7 +13,7 @@ from bsrn.physics.geometry import get_solar_position, get_bni_extra
 from bsrn.qc.ppl import ghi_ppl_test, bni_ppl_test, dhi_ppl_test
 
 
-from bsrn.io.readers import read_station_to_archive
+from bsrn.io.reader import read_station_to_archive
 from bsrn.modeling.clear_sky import add_clearsky_columns
 
 

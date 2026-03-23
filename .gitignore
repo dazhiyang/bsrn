@@ -15,7 +15,7 @@ dist/
 venv/
 env/
 conda-env/
-bsrn/
+/bsrn/
 
 # IDEs
 .vscode/
