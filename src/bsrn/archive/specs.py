@@ -1,5 +1,5 @@
 """
-bsrn.archiving.specs
+bsrn.archive.specs
 
 Logical-record field definitions (conceptually R ``A1_formats`` / ``getParams``)
 and static tables from R ``0_data.R``: ``LR_SPECS`` (formats), ``STATION_METADATA``

@@ -5,4 +5,4 @@ bsrn：BSRN 站点存档文件质量控制工具。
 
 __version__ = "0.1.3"
 
-from . import archiving, io, qc, utils, constants, modeling, physics
+from . import archive, io, qc, utils, constants, modeling, physics

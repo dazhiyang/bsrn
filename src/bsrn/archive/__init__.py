@@ -1,5 +1,5 @@
 """
-BSRN archiving: logical-record specs, validation, and R-style helpers.
+BSRN archive: logical-record specs, validation, and R-style helpers.
 
 R reference layout under ``data/R``:
 

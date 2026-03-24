@@ -72,7 +72,7 @@ class BSRNRecord:
             
             if value is not None:
                 # Dynamically call the corresponding validation function
-                import bsrn.archiving.validation as val_module
+                import bsrn.archive.validation as val_module
                 val_func = getattr(val_module, val_func_name, lambda x: x)
                 try:
                     if val_func_name in (
