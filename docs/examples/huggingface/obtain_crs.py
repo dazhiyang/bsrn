@@ -25,7 +25,7 @@ print(f"--- Processing {station_code} for Aug 2024 ---")
 if not os.path.exists(INPUT_FILE):
     raise FileNotFoundError(f"File not found: {INPUT_FILE}")
 
-df = bsrn.io.readers.read_station_to_archive(INPUT_FILE, logical_records="lr0100")
+df = bsrn.io.reader.read_station_to_archive(INPUT_FILE, logical_records="lr0100")
 print(f"Loaded {len(df)} rows from archive.")
 
 # 3. Add solar positioning

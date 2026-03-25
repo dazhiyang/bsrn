@@ -58,7 +58,7 @@ import bsrn.visualization
 
 ```python
 from bsrn.io.retrieval import download_bsrn_stn, get_bsrn_file_inventory
-from bsrn.io.readers import read_station_to_archive
+from bsrn.io.reader import read_station_to_archive
 from bsrn.physics.geometry import add_solpos_columns
 from bsrn.modeling.clear_sky import add_clearsky_columns
 from bsrn.qc.wrapper import run_qc
@@ -135,7 +135,7 @@ bsrn-qc/
 │       │   ├── formatter.py           # LR0001–LR4000 classes, get_bsrn_format, lr0001_format helpers
 │       │   └── validation.py          # Field validators (R validateFunc parity)
 │       ├── io/
-│       │   ├── readers.py             # Read .001, .002 station-to-archive files
+│       │   ├── reader.py              # Read xxxmmyy.dat.gz station-to-archive files
 │       │   ├── retrieval.py           # FTP downloads with retries
 │       │   ├── merra2.py              # MERRA-2 parquet fetch (Hugging Face → RAM)
 │       │   ├── mcclear.py             # SoDa McClear client helpers

@@ -1,5 +1,5 @@
 """
-bsrn file readers.
+bsrn file reader.
 BSRN 文件读取模块。
 
 Handles .001, .002, ... and other archive formats.

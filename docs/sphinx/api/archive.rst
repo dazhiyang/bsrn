@@ -3,7 +3,7 @@ Station-to-archive (LR)
 
 Logical-record specifications, validation, and string formatting for BSRN
 station-to-archive ``.dat`` files. For reading parsed LR data into pandas, see
-:func:`~bsrn.io.readers.read_station_to_archive` in :doc:`io`.
+:func:`~bsrn.io.reader.read_station_to_archive` in :doc:`io`.
 
 Core
 ----

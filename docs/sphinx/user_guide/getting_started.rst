@@ -8,7 +8,7 @@ Basic Usage
 
 .. code-block:: python
 
-   from bsrn.io.readers import read_station_to_archive
+   from bsrn.io.reader import read_station_to_archive
    from bsrn.modeling.clear_sky import add_clearsky_columns
 
    # Read a BSRN station-to-archive file
