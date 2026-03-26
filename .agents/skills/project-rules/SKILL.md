@@ -174,11 +174,13 @@ def function_name(param):
     - **Continuous Variables**: **MUST** use the **Viridis** color palette (or equivalent perceptually uniform colormaps).
 - **Line Size**: Default line size **MUST** be set to 0.3 for all plots.
 - **Fonts**: **MUST** use 'Times New Roman' for all axis labels, titles, and legends.
-- **Size**: **MUST** set text size to 7pt and figure width to 160mm (for standard journal column width).
+- **Size**:
+    - Figure width **MUST** be **160 mm** where a fixed journal column width applies.
+    - **9 pt** for **all** plotnine text (titles, axes, strip labels, legends, heatmap cell labels, etc.) across `src/bsrn/visualization/` unless a figure needs an explicit exception (document it in the module).
 - **Format**: All plots **MUST** be output in **PDF** format to ensure high-quality vector graphics.
 - **Color bar (continuous legend)**:
     - **MUST** match the setup used in `availability.py` for consistency across plots.
     - Use `scale_fill_cmap(cmap_name='viridis', name="<Legend title>")` for continuous fill scales.
-    - In `theme()`: `legend_position="bottom"`, `legend_title=element_text(size=7)`, `legend_text=element_text(size=7)`, `legend_key_width=100`, `legend_key_height=5`, `legend_margin=-12`, `legend_box_spacing=0`. To add space between x-axis title and legend without shifting the legend, use `axis_title_x=element_text(size=7, margin={"b": 8})` (bottom margin in points).
+    - In `theme()`: `legend_position="bottom"`, `legend_title=element_text(size=9)`, `legend_text=element_text(size=9)`, `legend_key_width=100`, `legend_key_height=5`, `legend_margin=-12`, `legend_box_spacing=0`. To add space between x-axis title and legend without shifting the legend, use `axis_title_x=element_text(size=9, margin={"b": 8})` (bottom margin in points).
     - **Plot margin** (optional): `plot_margin_top`, `plot_margin_right`, `plot_margin_bottom`, `plot_margin_left` (each in `[0, 1]`; use 0 for no extra margin).
 

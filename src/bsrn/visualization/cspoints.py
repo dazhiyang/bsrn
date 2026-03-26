@@ -203,12 +203,12 @@ def plot_csd_booklet(file_path, output_file, station_code, df=None):
                 + labs(title=title, x="Time (UTC)", y="[W/m²]")
                 + theme_minimal()
                 + theme(
-                    text=element_text(family="Times New Roman", size=7),
-                    axis_title=element_text(size=7),
-                    axis_text=element_text(size=7),
-                    plot_title=element_text(size=8, face="bold", margin={"b": 10}),
+                    text=element_text(family="Times New Roman", size=9),
+                    axis_title=element_text(size=9),
+                    axis_text=element_text(size=9),
+                    plot_title=element_text(size=9, margin={"b": 10}),
                     figure_size=(width_inch, height_inch),
-                    strip_text=element_text(size=7, face="bold"),
+                    strip_text=element_text(size=9),
                 )
                 + scale_x_datetime(date_labels="%H:%M")
             )

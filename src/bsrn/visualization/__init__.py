@@ -13,7 +13,7 @@ from .clearsky_models import plot_clearsky_models_booklet
 from .cspoints import plot_csd_booklet
 from .qc_table import plot_qc_table
 from .separation import plot_k_vs_kt
-from .timeseries import plot_bsrn_timeseries_booklet
+from .timeseries import plot_bsrn_timeseries_booklet, plot_bsrn_timeseries_day
 
 __all__ = [
     "availability",
@@ -30,4 +30,5 @@ __all__ = [
     "plot_qc_table",
     "plot_k_vs_kt",
     "plot_bsrn_timeseries_booklet",
+    "plot_bsrn_timeseries_day",
 ]

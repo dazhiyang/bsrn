@@ -223,17 +223,17 @@ def plot_calendar(df, output_file, station_code, meas_col=None, clear_col=None,
         + labs(title=title, x="", y="Irradiance [W/m²]", color="")
         + theme_minimal()
         + theme(
-            text=element_text(family="Times New Roman", size=7),
-            axis_title=element_text(size=7),
-            axis_text=element_text(size=7),
+            text=element_text(family="Times New Roman", size=9),
+            axis_title=element_text(size=9),
+            axis_text=element_text(size=9),
             axis_text_x=element_blank(),
-            plot_title=element_text(size=8, face="bold"),
-            strip_text_x=element_text(size=7, face="bold"),
+            plot_title=element_text(size=9),
+            strip_text_x=element_text(size=9),
             strip_text_y=element_blank(),
             figure_size=(width_inch, height_inch),
             panel_grid_major=element_line(size=0.15, alpha=0.7),
             legend_position="bottom",
-            legend_text=element_text(size=7),
+            legend_text=element_text(size=9),
             panel_spacing=0,
             panel_border=element_blank(),
         )

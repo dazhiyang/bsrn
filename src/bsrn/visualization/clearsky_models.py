@@ -198,11 +198,11 @@ def plot_clearsky_models_booklet(
                 + labs(title=title, x="Time (UTC)", y="[W/m²]", color="", linetype="")
                 + theme_minimal()
                 + theme(
-                    text=element_text(family="Times New Roman", size=7),
-                    axis_title=element_text(size=7),
-                    axis_text=element_text(size=7),
-                    plot_title=element_text(size=8, face="bold"),
-                    strip_text=element_text(size=7, face="bold"),
+                    text=element_text(family="Times New Roman", size=9),
+                    axis_title=element_text(size=9),
+                    axis_text=element_text(size=9),
+                    plot_title=element_text(size=9),
+                    strip_text=element_text(size=9),
                     figure_size=(width_inch, height_inch),
                     legend_position="top",
                 )

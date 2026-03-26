@@ -9,7 +9,7 @@ from plotnine import (
     ggplot, aes, geom_tile, geom_text,
     theme, element_text, element_blank,
     labs, scale_x_discrete, scale_y_discrete,
-    scale_fill_manual, theme_minimal, coord_fixed
+    scale_fill_manual, theme_minimal,
 )
 
 def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
@@ -114,23 +114,25 @@ def plot_qc_table(daily_stats, title="BSRN Quality Audit", output_file=None):
 
     melted['Label'] = melted.apply(format_val, axis=1)
 
-    # Figure dimensions: width 160mm / 图片尺寸：宽度 160mm
-    # Height varies with number of days / 高度随天数变化
+    # Figure dimensions: width 160mm; height scales with row count / 宽度 160 mm，高度随行数
+    _font_pt = 9
     width_inch = 160 / 25.4
-    height_inch = (len(days_order) * 0.18) + 1.2
+    height_inch = (len(days_order) * 0.17) + 1.2
 
     p = (
         ggplot(melted, aes(x='Metric_Name', y='Day', fill='Category')) +
         geom_tile(color='#D0D0D0', size=0.3) +
-        geom_text(aes(label='Label'), size=7, family='Times New Roman') +
+        geom_text(aes(label='Label'), size=_font_pt, family='Times New Roman') +
         scale_fill_manual(values=fill_colors, guide=None) +
         scale_x_discrete() +
         labs(title=title, x="", y="Date") +
         theme_minimal() +
         theme(
-            text=element_text(family='Times New Roman', size=7),
-            axis_text_x=element_text(rotation=45, hjust=0.5),
-            plot_title=element_text(size=7, margin={'b': 5}),
+            text=element_text(family='Times New Roman', size=_font_pt),
+            axis_text_x=element_text(rotation=45, hjust=0.5, size=_font_pt),
+            axis_text_y=element_text(size=_font_pt),
+            axis_title=element_text(size=_font_pt),
+            plot_title=element_text(size=_font_pt, margin={'b': 5}),
             panel_grid=element_blank(),
             figure_size=(width_inch, height_inch)
         )

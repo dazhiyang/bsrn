@@ -31,3 +31,4 @@ Time Series
    :toctree: generated/
 
    bsrn.visualization.timeseries.plot_bsrn_timeseries_booklet
+   bsrn.visualization.timeseries.plot_bsrn_timeseries_day

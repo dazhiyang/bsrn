@@ -207,18 +207,18 @@ def plot_k_vs_kt(df, models, lat, lon, ghi_col="ghi", dhi_col="dhi", k_mod_cols=
             + coord_fixed(ratio=1)
             + theme_minimal()
             + theme(
-                text=element_text(family="Times New Roman", size=7),
-                plot_title=element_text(size=7),
-                axis_title=element_text(size=7),
-                axis_text=element_text(size=7),
+                text=element_text(family="Times New Roman", size=9),
+                plot_title=element_text(size=9),
+                axis_title=element_text(size=9),
+                axis_text=element_text(size=9),
                 legend_position="bottom",
-                legend_title=element_text(size=7),
-                legend_text=element_text(size=7),
+                legend_title=element_text(size=9),
+                legend_text=element_text(size=9),
                 legend_key_width=100,
                 legend_key_height=5,
                 legend_margin=-12,
                 legend_box_spacing=0,
-                axis_title_x=element_text(size=7, margin={"t": 1, "b": 2}),  # space between x-title and legend
+                axis_title_x=element_text(size=9, margin={"t": 1, "b": 2}),  # space between x-title and legend
                 plot_margin_top=0,
                 plot_margin_right=0,
                 plot_margin_bottom=0,

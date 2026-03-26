@@ -28,6 +28,7 @@ data/
 # Miscellaneous
 .DS_Store
 *.pdf
+tmp_plot_*.py
 
 # Tests
 tests/
