@@ -843,7 +843,8 @@ def lefevre_csd(ghi, dhi, ghi_extra, zenith, times=None,
 
     diagnostics = {"k": k, "kt": kt, "M": M, "kt_prime": kt_prime, "KTp": KTp}
     for key in diagnostics:
-        arr = np.asarray(diagnostics[key], dtype=float)
+        # Writable copy: ``np.asarray`` can alias read-only buffers (e.g. pandas ``rolling`` output).
+        arr = np.array(diagnostics[key], dtype=float, copy=True)
         arr[bad] = np.nan
         diagnostics[key] = arr
     return _csd_to_output(idx, cloud_flag, "lefevre", diagnostics, return_diagnostics)
