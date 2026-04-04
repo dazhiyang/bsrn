@@ -4,18 +4,18 @@ BSRN archive: logical-record specs, validation, and R-style helpers.
 R reference layout under ``data/R``:
 
 - ``0_data.R`` — table placeholders (A1–A7); Python: ``specs`` (``LR_SPECS`` + station / code tables)
-- ``1_utils.R`` — calendar helpers and bindings; Python: ``api`` (``get_azimuth_elevation``, …; month length via ``calendar.monthrange`` where needed)
-- ``0_bsrnFormats_*.R`` — format strings; Python: ``records_dynamic`` (``LR*``) + ``get_bsrn_format`` on each model
+- ``1_utils.R`` — horizon layout helper; Python: ``archive_lr_formats.get_azimuth_elevation`` (month length: ``calendar.monthrange`` in LR formatters)
+- ``0_bsrnFormats_*.R`` — format strings; Python: ``records_models`` (``LR*``) + ``get_bsrn_format`` on each model
 - ``1_validateFunc_*.R`` — Python: ``validation``
-- ``2_R6Class_*.R`` — Python: ``records_dynamic`` (``LR0001`` … ``LR4000``); ``api`` (``get_azimuth_elevation``)
+- ``2_R6Class_*.R`` — Python: ``records_models`` (``LR0001`` … ``LR4000``); ``archive_lr_formats`` (``get_bsrn_format`` + ``get_azimuth_elevation``)
 
 BSRN 存档：逻辑记录规范、校验与 R 风格辅助函数。上述 R 文件与 Python 子模块对应关系见源码注释。
 """
 
-from . import api, specs, validation
-from .api import get_azimuth_elevation
+from . import specs, validation
+from .archive_lr_formats import get_azimuth_elevation
 from .records_base import ArchiveRecordBase
-from .records_dynamic import (
+from .records_models import (
     LR0001,
     LR0002,
     LR0003,
@@ -59,7 +59,6 @@ __all__ = [
     "LR4000",
     "LR4000CONST",
     "get_azimuth_elevation",
-    "api",
     "specs",
     "validation",
 ]

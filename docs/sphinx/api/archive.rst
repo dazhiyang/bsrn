@@ -30,7 +30,7 @@ Logical record classes
    bsrn.archive.LR4000
    bsrn.archive.LR4000CONST
 
-Each ``LR*`` model implements ``get_bsrn_format`` for archive text (see ``bsrn.archive.archive_lr_formats``).
+Each ``LR*`` model implements ``get_bsrn_format`` for archive text; ``get_azimuth_elevation`` is defined alongside those helpers in ``bsrn.archive.archive_lr_formats``.
 
 Metadata and lookup tables
 --------------------------
@@ -50,9 +50,8 @@ Submodules
 .. autosummary::
    :toctree: generated/
 
-   bsrn.archive.api
    bsrn.archive.archive_lr_formats
    bsrn.archive.records_base
-   bsrn.archive.records_dynamic
+   bsrn.archive.records_models
    bsrn.archive.specs
    bsrn.archive.validation

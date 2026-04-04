@@ -59,6 +59,8 @@ LR_SPECS = {
         "deputyAddress":         {"label": "Address", "format": "A80", "missing": None, "mandatory": True, "default": None, "validate_func": "A80_validateFunction"}
     },
     "LR0003": {
+        # BSRN: commentary; when the file includes LR4000, append ``@LR4000CONST`` lines (see ``LR4000`` note).
+        # BSRN：注释块；若文件含 LR4000，须追加 ``@LR4000CONST`` 行（见 ``LR4000`` 前说明）。
         "message": {"label": "Messages not to be inserted in the BSRN database", "format": "A", "missing": "XXX", "mandatory": False, "default": None, "validate_func": "A_validateFunction"}
     },
     "LR0004": {
@@ -189,6 +191,14 @@ LR_SPECS = {
         "humidity":    {"label": "Relative humidity at downward long-wave instrument height", "format": "F5.1", "missing": -99.9, "mandatory": False, "default": None, "validate_func": "LR0100_validateFunction"},
         "pressure":    {"label": "Pressure at downward long-wave instrument height", "format": "I4", "missing": -999, "mandatory": False, "default": None, "validate_func": "LR0100_validateFunction"}
     },
+    # BSRN: If the monthly file includes LR4000 (or LR4nnn), LR0003 must embed one ``@LR4000CONST`` (or
+    # ``@LR4nnnCONST``) line per pyrgeometer whose raw data appear in that LR (e.g. two lines for
+    # downward- and upward-facing LW). Template:
+    # ``@LR4000CONST, s/n (Manufacturer), s/n (WMO), CertificateCodeID, C, k0, k1, k2, k3, f`` (C, ki, f
+    # are the general pyrgeometer equation parameters). Build with ``LR4000CONST.get_bsrn_format`` and
+    # pass into ``LR0003.get_bsrn_format(message, *const_lines)``.
+    # BSRN：含 LR4000 时 LR0003 须含对应每个辐射表的 ``@LR4000CONST`` 元数据行；用 ``LR4000CONST`` 格式化后作为
+    # ``LR0003.get_bsrn_format`` 的额外参数追加。
     "LR4000": {
         "yearMonth":     {"label": "Year and month of measurement ('YYYY-MM')", "format": "A7", "missing": None, "mandatory": True, "default": None, "validate_func": "genericValidateFunction"},
         "domeT1_down":   {"label": "dome temperature 1downward long-wave instrument", "format": "F6.2", "missing": -99.99, "mandatory": False, "default": None, "validate_func": "LR4000_validateFunction"},
@@ -202,6 +212,8 @@ LR_SPECS = {
         "bodyT_up":      {"label": "body temperature upward long-wave instrument", "format": "F6.2", "missing": -99.99, "mandatory": False, "default": None, "validate_func": "LR4000_validateFunction"},
         "longwave_up":   {"label": "thermopile output upward long-wave instrument", "format": "F6.1", "missing": -999.9, "mandatory": False, "default": None, "validate_func": "LR4000_validateFunction"}
     },
+    # One ``LR4000CONST`` record per pyrgeometer; formatted text belongs in LR0003 (see note above).
+    # 每个辐射表一条 ``LR4000CONST``；格式化文本写入 LR0003（见上）。
     "LR4000CONST": {
         "serialNumber_Manufacturer": {"label": "The serial number as it appears in the calibration certificate/instrument plate", "format": "I6", "missing": None, "mandatory": True, "default": None, "validate_func": "A_validateFunction"},
         "serialNumber_WRMC":         {"label": "The serial nimber used in your station-to-archive files (LR0008/0009) to identify the instrument with this serial number (e.g. for dom: \"74xxx\", with xxx=001,002,003,...)", "format": "ND", "missing": None, "mandatory": False, "default": None, "validate_func": "A_validateFunction"},
@@ -215,7 +227,7 @@ LR_SPECS = {
         "k2":                        {"label": "General equation of the pyrgeometer : ki are the instrument dependent calibration constants", "format": "ND", "missing": None, "mandatory": False, "default": None, "validate_func": "C_validateFunction"},
         "k3":                        {"label": "General equation of the pyrgeometer : ki are the instrument dependent calibration constants", "format": "ND", "missing": None, "mandatory": False, "default": None, "validate_func": "C_validateFunction"},
         "f":                         {"label": "General equation of the pyrgeometer : correction factor for infrared irradiance on unshaded domes", "format": "ND", "missing": None, "mandatory": False, "default": None, "validate_func": "C_validateFunction"}
-    }
+    },
 }
 
 # STATION_METADATA: BSRN station directory by 3-letter code (name, lat/lon, contacts, …).
