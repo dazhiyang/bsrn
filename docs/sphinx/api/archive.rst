@@ -5,6 +5,18 @@ Logical-record specifications, validation, and string formatting for BSRN
 station-to-archive ``.dat`` files. For reading parsed LR data into pandas, see
 :func:`~bsrn.io.reader.read_station_to_archive` in :doc:`io`.
 
+The concrete ``LR*`` types are **Pydantic v2** models (:class:`pydantic.BaseModel` subclasses).
+Field layout and Fortran-width metadata come from :data:`~bsrn.archive.LR_SPECS`; each field’s
+``validate_func`` name resolves to a callable in :mod:`bsrn.archive.validation`.
+
+- **Scalar and header fields** use :func:`~bsrn.archive.records_models.lr_spec`, which attaches
+  ``json_schema_extra`` and an :class:`~pydantic.functional_validators.AfterValidator` built by
+  :func:`~bsrn.archive.records_base.make_archive_after_validator`.
+- **LR0100 / LR4000 minute columns** use :func:`~bsrn.archive.records_models.lr_spec_field` plus
+  model :func:`~pydantic.field_validator` methods that pass ``yearMonth`` into
+  :func:`~bsrn.archive.validation.LR0100_validateFunction` /
+  :func:`~bsrn.archive.validation.LR4000_validateFunction`.
+
 Core
 ----
 .. autosummary::
@@ -12,6 +24,15 @@ Core
 
    bsrn.archive.ArchiveRecordBase
    bsrn.archive.get_azimuth_elevation
+
+Field helpers (``records_models`` / ``records_base``)
+-----------------------------------------------------
+.. autosummary::
+   :toctree: generated/
+
+   bsrn.archive.records_models.lr_spec
+   bsrn.archive.records_models.lr_spec_field
+   bsrn.archive.records_base.make_archive_after_validator
 
 Logical record classes
 ----------------------
@@ -30,7 +51,7 @@ Logical record classes
    bsrn.archive.LR4000
    bsrn.archive.LR4000CONST
 
-Each ``LR*`` model implements ``get_bsrn_format`` for archive text; ``get_azimuth_elevation`` is defined alongside those helpers in ``bsrn.archive.archive_lr_formats``.
+Each ``LR*`` model implements ``get_bsrn_format`` for archive text; ``get_azimuth_elevation`` is defined alongside those helpers in :mod:`bsrn.archive.archive_lr_formats`.
 
 Metadata and lookup tables
 --------------------------

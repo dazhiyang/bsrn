@@ -10,15 +10,20 @@ from __future__ import annotations
 
 import os
 import sys
+import tomllib
 
 _ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.insert(0, os.path.join(_ROOT, "src"))
 sys.path.insert(0, _ROOT)
 
+with open(os.path.join(_ROOT, "pyproject.toml"), "rb") as _pf:
+    _release = tomllib.load(_pf)["project"]["version"]
+
 project = "bsrn"
 copyright = "Dazhi Yang"
 author = "Dazhi Yang"
-release = "0.1.2"
+release = _release
+version = _release
 
 # Master document at docs root → index.html for Read the Docs root URL.
 root_doc = "index"
@@ -50,8 +55,7 @@ intersphinx_mapping = {
     "python": ("https://docs.python.org/3/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "pandas": ("https://pandas.pydata.org/docs/", None),
-    "scipy": ("https://docs.scipy.org/doc/scipy/", None),
-    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "pydantic": ("https://docs.pydantic.dev/latest/", None),
 }
 
 extlinks = {

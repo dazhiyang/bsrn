@@ -1,6 +1,6 @@
 # bsrn
 
-[![PyPI version](https://img.shields.io/pypi/v/bsrn.svg?v=0.1.4)](https://pypi.org/project/bsrn/)
+[![PyPI version](https://img.shields.io/pypi/v/bsrn.svg?v=0.2.0)](https://pypi.org/project/bsrn/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/bsrn.svg)](https://pypi.org/project/bsrn/)
 [![Documentation Status](https://readthedocs.org/projects/bsrn/badge/?version=latest)](https://bsrn.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://static.pepy.tech/badge/bsrn)](https://pepy.tech/project/bsrn)
@@ -43,7 +43,7 @@ For standard quality control and clear-sky modeling, simply import the base pack
 ```python
 import bsrn
 
-# Access core modules like bsrn.qc, bsrn.modeling, bsrn.io
+# Access core modules like bsrn.qc, bsrn.modeling, bsrn.io, bsrn.archive
 ```
 
 If you installed the [viz] extra and want to generate plots, you must explicitly import the visualization submodule:
@@ -110,7 +110,7 @@ Other important features include:
 - **Cloud Enhancement Event (CEE) Detection:** Killinger, Yang, and Gueymard methods to detect events when measured GHI significantly exceeds references.
 - **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
 - **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
-- **Station-to-archive formatting:** The `bsrn.archive` subpackage provides logical-record specifications (`LR_SPECS`), Fortran-style validation, and ASCII `get_bsrn_format` output for BSRN header and data records (`LR0001`–`LR4000`). Concrete `LR*` types are explicit Pydantic models in `records_models` (re-exported from `bsrn.archive`); `get_azimuth_elevation` lives in `archive_lr_formats` (re-exported from `bsrn.archive`).
+- **Station-to-archive formatting:** The `bsrn.archive` subpackage provides `LR_SPECS`, Fortran-style validators in `validation.py` (names referenced by each field’s `validate_func`), and ASCII output via `get_bsrn_format`. Scalar/header fields on the Pydantic `LR*` models use a single `lr_spec(lr_code, field_name, type, …)` annotation so metadata and post-parse checks stay in one place; LR0100/LR4000 minute columns use `field_validator` with `yearMonth` for vector length checks. Concrete types (`LR0001`–`LR4000CONST`) live in `records_models` and are re-exported from `bsrn.archive`; `get_azimuth_elevation` is in `archive_lr_formats` (also re-exported).
 - **Visualization:** Data availability heatmaps and k vs kt separation plots via the very pretty `plotnine` (which reminds me of the good old R days).
 
 ## 📂 File Structure
@@ -130,10 +130,11 @@ bsrn-qc/
 │       ├── __init__.py
 │       ├── constants.py               # Station database, Linke turbidity & physical constants
 │       ├── archive/                   # Station-to-archive logical records (WRMC-style LR layouts)
+│       │   ├── __init__.py            # Re-exports LR* models, LR_SPECS, get_azimuth_elevation, …
 │       │   ├── specs.py               # LR_SPECS + station directory & A3–A7 code tables
 │       │   ├── archive_lr_formats.py  # get_bsrn_format + get_azimuth_elevation (LR0004)
-│       │   ├── records_base.py        # ArchiveRecordBase (Pydantic + archive validation)
-│       │   ├── records_models.py      # explicit LR0001–LR4000CONST Pydantic models
+│       │   ├── records_base.py        # ArchiveRecordBase, make_archive_after_validator
+│       │   ├── records_models.py      # lr_spec / lr_spec_field; LR0001–LR4000CONST Pydantic models
 │       │   ├── formatting.py          # Fortran-style field formatting mixin
 │       │   └── validation.py          # BSRN archive field validators (LR_SPECS validate_func)
 │       ├── io/
@@ -298,16 +299,30 @@ fig.save("availability.png", dpi=300)
 
 ### Station-to-archive logical records (`bsrn.archive`)
 
-Logical records are **Pydantic v2** models (`LR0001`, …, `LR0100`, `LR4000`, …) defined in `records_models` and re-exported from `bsrn.archive`. Field semantics still follow `LR_SPECS`. The legacy umbrella type **`BSRNRecord` is removed**—use a concrete `LR*` model and call `get_bsrn_format` on the instance.
+Logical records are **Pydantic v2** models (`LR0001`, …, `LR0100`, `LR4000`, `LR4000CONST`, …) defined in `records_models` and re-exported from `bsrn.archive`. The legacy umbrella type **`BSRNRecord` is removed**—use a concrete `LR*` model and call `get_bsrn_format` on the instance.
 
-Use `LR_SPECS` for field names, formats, and validators; build text with `LR0001(**fields).get_bsrn_format()`, or for minute LRs pass column series plus `yearMonth` into `LR0100` / `LR4000` then `get_bsrn_format(changed=...)`.
+- **`LR_SPECS`** holds per-field `format`, missing tokens, defaults, and `validate_func` names.
+- **Scalars:** validation runs through Pydantic `AfterValidator`, which calls the matching function in `bsrn.archive.validation`.
+- **LR0100 / LR4000 minute vectors:** validators need `yearMonth`; those columns use a model-level `field_validator` instead.
 
 ```python
 from bsrn.archive import LR0001, LR_SPECS
 
 # Required keys for LR0001 are listed in LR_SPECS["LR0001"]
-# out = LR0001(stationNumber=94, month=1, year=2024, version=1).get_bsrn_format()
+out = LR0001(stationNumber=94, month=1, year=2024, version=1).get_bsrn_format()
 ```
+
+For minute blocks, pass `yearMonth="YYYY-MM"` and `pandas.Series` or `numpy.ndarray` per column (see `LR_SPECS["LR0100"]` / `["LR4000"]`), then `LR0100(...).get_bsrn_format(changed=True)` (and similarly for LR4000).
+
+**Regression check (repository checkout):** from the repo root, generate a monthly `.dat` and compare to the checked-in reference (should match byte-for-byte):
+
+```bash
+PYTHONPATH=src python tests/2025-01/Code/2.station_to_archive.py \
+  -o tests/2025-01/Output/qiq0125_run.dat --no-gzip
+cmp tests/2025-01/Output/qiq0125_run.dat tests/2025-01/Output/qiq0125_ref.dat
+```
+
+Edit the `CONFIG` block at the top of `2.station_to_archive.py` for station-specific paths and metadata; the script expects the minute table at `tests/2025-01/Output/qiq0125.txt` for the default QIQ January 2025 example.
 
 ## 📜 License
 
