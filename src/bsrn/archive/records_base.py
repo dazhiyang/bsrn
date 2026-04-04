@@ -7,17 +7,18 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
-from pydantic import BaseModel, ConfigDict, model_validator
+from pydantic import BaseModel, ConfigDict
 
 from .formatting import ArchiveFormatMixin
+from .specs import LR_SPECS
 
 
 def _validation_callable(val_module, spec_validate_name: str):
     """
     Resolve ``LR_SPECS["validate_func"]`` to a function in ``validation``.
 
-    Spec strings follow R / Fortran labels (e.g. ``F12.4_validateFunction``); Python
-    identifiers use underscores (``F12_4_validateFunction``). Try the spec name first,
+    Names follow the BSRN archive convention (e.g. ``F12.4_validateFunction``); Python
+    identifiers use underscores (``F12_4_validateFunction``). Try the spec string first,
     then the underscored form.
     """
     fn = getattr(val_module, spec_validate_name, None)
@@ -31,10 +32,45 @@ def _validation_callable(val_module, spec_validate_name: str):
     )
 
 
+def make_archive_after_validator(lr_code: str, field_name: str):
+    """
+    Build a unary callable for :class:`pydantic.functional_validators.AfterValidator`.
+
+    Reads ``LR_SPECS[lr_code][field_name]`` (``validate_func`` + ``format``). Minute
+    LR0100 / LR4000 columns must use :func:`field_validator` with ``yearMonth`` instead.
+    """
+    meta = LR_SPECS[lr_code][field_name]
+    vfn = meta["validate_func"]
+    if vfn in ("LR0100_validateFunction", "LR4000_validateFunction"):
+        raise ValueError(
+            f"{lr_code}.{field_name}: use field_validator with yearMonth for minute columns"
+        )
+
+    def validate(value):
+        if value is None:
+            return value
+        import bsrn.archive.validation as val_module
+
+        fn = _validation_callable(val_module, vfn)
+        try:
+            clean = fn(value)
+        except Exception as e:
+            raise ValueError(f"{field_name}\n {str(e)}") from e
+        if isinstance(value, (np.ndarray, pd.Series, list, tuple)):
+            return clean if clean is not value else value
+        return ArchiveFormatMixin._coerce_stored_scalar(field_name, clean, meta)
+
+    return validate
+
+
 class ArchiveRecordBase(ArchiveFormatMixin, BaseModel):
     """
-    Base LR model: archive validation (R validateFunc) + Fortran formatting.
-    逻辑记录基类：存档校验（R validateFunc）与 Fortran 格式化。
+    Base class for archive LRs: Pydantic ``BaseModel`` plus ``ArchiveFormatMixin`` for
+    Fortran-width ASCII output. Subclasses attach BSRN checks via
+    :class:`pydantic.functional_validators.AfterValidator` and, for LR0100 / LR4000
+    minute vectors, :func:`pydantic.field_validator` (with ``ValidationInfo`` for
+    ``yearMonth``).
+    逻辑记录基类：Pydantic 模型 + 定宽格式化；子类用 ``AfterValidator`` / ``field_validator`` 挂接 BSRN 校验。
     """
 
     model_config = ConfigDict(extra="ignore", frozen=False)
@@ -46,40 +82,3 @@ class ArchiveRecordBase(ArchiveFormatMixin, BaseModel):
         ``get_bsrn_format`` 实现使用的字段值字典。
         """
         return {name: getattr(self, name) for name in type(self).model_fields}
-
-    @model_validator(mode="after")
-    def _archive_validate_and_coerce(self):
-        """
-        Run ``validation.*_validateFunction`` for each non-None field; coerce I/F scalars.
-        对非 ``None`` 字段运行 ``validation.*_validateFunction``；对标量 I/F 做强制转换。
-
-        Coerced values are written back with ``object.__setattr__`` so this validator always
-        returns ``self`` (Pydantic v2 warns when an ``after`` validator returns
-        ``model_copy(update=...)`` from ``__init__``).
-        """
-        import bsrn.archive.validation as val_module
-
-        cls_name = self.__class__.__name__
-        ym = getattr(self, "yearMonth", None) if cls_name in ("LR0100", "LR4000") else None
-        for fname in type(self).model_fields:
-            meta = self._field_meta(fname)
-            vfn = meta["validate_func"]
-            raw = getattr(self, fname)
-            if raw is None:
-                continue
-            fn = _validation_callable(val_module, vfn)
-            try:
-                if vfn in ("LR0100_validateFunction", "LR4000_validateFunction"):
-                    clean = fn(raw, yearMonth=ym)
-                else:
-                    clean = fn(raw)
-            except Exception as e:
-                raise ValueError(f"{fname}\n {str(e)}") from e
-            if isinstance(raw, (np.ndarray, pd.Series, list, tuple)):
-                if clean is not raw:
-                    object.__setattr__(self, fname, clean)
-            else:
-                clean = self._coerce_stored_scalar(fname, clean, meta)
-                if clean != raw:
-                    object.__setattr__(self, fname, clean)
-        return self

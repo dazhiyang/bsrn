@@ -1,12 +1,11 @@
 """
 bsrn.archive.specs
 
-Logical-record field definitions (conceptually R ``A1_formats`` / ``getParams``)
-and static tables from R ``0_data.R``: ``LR_SPECS`` (formats), ``STATION_METADATA``
-(A2), ``TOPOGRAPHIES`` / ``SURFACES`` / ``QUANTITIES`` / ``PYRGEOMETER_*`` (A3–A7).
+Logical-record field definitions for BSRN station-to-archive files (``LR_SPECS``) and
+static lookup tables: ``STATION_METADATA``, ``TOPOGRAPHIES``, ``SURFACES``, ``QUANTITIES``,
+``PYRGEOMETER_BODY``, ``PYRGEOMETER_DOME``.
 
-逻辑记录字段定义（对应 R 的 ``A1_formats`` / ``getParams``）及 ``0_data.R`` 静态表：
-``LR_SPECS``（格式）、``STATION_METADATA``（A2）、以及 A3–A7 分类编码表。
+BSRN 台站存档文件的逻辑记录字段定义（``LR_SPECS``）及静态编码表。
 
 Format Codes (Fortran-style):
 - 'I#': Integer padded to # characters (e.g., I4)
@@ -27,8 +26,8 @@ Format Codes (Fortran-style):
 """
 
 # LR_SPECS: per logical record (LR0001 … LR4000CONST), each field’s format, missing value,
-# mandatory flag, default, and validate_func name (R ``A1_formats`` / ``getParams``).
-# 各逻辑记录的字段规范：Fortran 风格格式、缺失值、必填、默认值、校验函数名（R ``A1_formats`` / ``getParams``）。
+# mandatory flag, default, and validate_func name (callable name in ``validation``).
+# 各逻辑记录的字段规范：Fortran 风格格式、缺失值、必填、默认值、以及 ``validation`` 模块中的校验函数名。
 LR_SPECS = {
     "LR0001": {
         "stationNumber": {"label": "Station identification number", "format": "I2", "missing": None, "mandatory": True, "default": None, "validate_func": "I2_validateFunction"},
@@ -231,7 +230,7 @@ LR_SPECS = {
 }
 
 # STATION_METADATA: BSRN station directory by 3-letter code (name, lat/lon, contacts, …).
-# R ``A2_bsrnStations`` in ``0_data.R``. Used when filling LR0001 / LR0002 / LR0004 style fields.
+# Used when populating LR0001 / LR0002 / LR0004-style fields.
 # BSRN 站点目录（三位代码 → 名称、坐标、联系人等）；用于 LR0001 / LR0002 / LR0004 等字段。
 STATION_METADATA = {
     "ABS": {"name": "Abashiri", "location": "Hokkaido, Japan", "station_no": None, "lat": 44.0178, "lon": 144.2797, "elevation": 38.0, "established": "2021-03-01", "closed": None, "surface_type": "asphalt", "topography_type": "flat, rural", "scientist": "Sasaki Shun", "email": "rrc-jma@met.kishou.go.jp", "url": None},
@@ -314,8 +313,8 @@ STATION_METADATA = {
     "YUS": {"name": "Yushan", "location": "Taiwan", "station_no": 84, "lat": 23.4876, "lon": 120.9595, "elevation": 3858.0, "established": None, "closed": None, "surface_type": "forest, mixed", "topography_type": "mountain top, rural", "scientist": "Kun-Wei Lin", "email": "adenins@cwb.gov.tw", "url": None}
 }
 
-# QUANTITIES: measured quantity label → WRMC ``radiationQuantityMeasured`` id for LR0008. R A3.
-# 辐射/气象量名称 → LR0008 中 ``radiationQuantityMeasured`` 的编号（R A3）。
+# QUANTITIES: measured quantity label → WRMC ``radiationQuantityMeasured`` id for LR0008.
+# 辐射/气象量名称 → LR0008 中 ``radiationQuantityMeasured`` 的编号。
 QUANTITIES = {
     "global 2 (pyranometer) ": 2,
     "direct": 3,
@@ -346,8 +345,8 @@ QUANTITIES = {
     "cloud liquid water": 303
 }
 
-# SURFACES: surface-type label → I2 code for LR0004 ``surfaceType``. R A4.
-# 地表类型描述 → LR0004 中 ``surfaceType`` 的整数码（R A4）。
+# SURFACES: surface-type label → I2 code for LR0004 ``surfaceType``.
+# 地表类型描述 → LR0004 中 ``surfaceType`` 的整数码。
 SURFACES = {
     "glacier - accumulation area": 1,
     "glacier - ablation area": 2,
@@ -373,8 +372,8 @@ SURFACES = {
 }
 
 
-# TOPOGRAPHIES: human-readable topography label → I2 code for LR0004 ``topographyType``. R A5.
-# 地形描述字符串 → LR0004 中 ``topographyType`` 的整数码（R A5）。
+# TOPOGRAPHIES: human-readable topography label → I2 code for LR0004 ``topographyType``.
+# 地形描述字符串 → LR0004 中 ``topographyType`` 的整数码。
 TOPOGRAPHIES = {
     "flat - urban": 1,
     "flat - rural": 2,
@@ -386,8 +385,8 @@ TOPOGRAPHIES = {
     "mountain valley - rural": 8
 }
 
-# PYRGEOMETER_BODY: pyrgeometer body compensation option → I2 code for LR0008 ``pyrgeometerBody``. R A6.
-# 长波表体补偿方式 → LR0008 ``pyrgeometerBody`` 编码（R A6）。
+# PYRGEOMETER_BODY: pyrgeometer body compensation option → I2 code for LR0008 ``pyrgeometerBody``.
+# 长波表体补偿方式 → LR0008 ``pyrgeometerBody`` 编码。
 PYRGEOMETER_BODY = {
     "Manufacturer & battery circuit": 1,
     "Corrected manufacturer & battery circuit": 2,
@@ -395,8 +394,8 @@ PYRGEOMETER_BODY = {
     "Other": 4
 }
 
-# PYRGEOMETER_DOME: pyrgeometer dome / ventilation option → I2 code for LR0008 ``pyrgeometerDome``. R A7.
-# 长波表罩与通风组合 → LR0008 ``pyrgeometerDome`` 编码（R A7）。
+# PYRGEOMETER_DOME: pyrgeometer dome / ventilation option → I2 code for LR0008 ``pyrgeometerDome``.
+# 长波表罩与通风组合 → LR0008 ``pyrgeometerDome`` 编码。
 PYRGEOMETER_DOME = {
     "Dome shaded": 1,
     "Instrument ventilated": 2,

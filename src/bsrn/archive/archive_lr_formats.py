@@ -1,8 +1,8 @@
 """
-``get_bsrn_format`` implementations for Pydantic archive LR models (R ``2_R6Class_*.R``).
-Pydantic 存档逻辑记录的 ``get_bsrn_format`` 实现（R ``2_R6Class_*.R``）。
+``get_bsrn_format`` implementations for Pydantic archive logical-record models.
+Pydantic 逻辑记录模型的 ``get_bsrn_format`` 实现。
 
-Also exposes :func:`get_azimuth_elevation` (R ``1_utils.R`` / ``getAzimuthElevation``) used by LR0004.
+Also exposes :func:`get_azimuth_elevation` for LR0004 horizon ``az el`` lines.
 
 BSRN: files with LR4000 must place one ``@LR4000CONST`` metadata line per contributing pyrgeometer
 inside LR0003 (see ``specs.LR_SPECS`` comments on ``LR0003`` / ``LR4000``).
@@ -19,8 +19,8 @@ def get_azimuth_elevation(azimuth=None, elevation=None):
     """
     Format horizon azimuth/elevation lists for LR0004.
 
-    Translates from R function ``getAzimuthElevation`` (``1_utils.R``).
-    对应 R 函数 ``getAzimuthElevation``（``1_utils.R``）。
+    Builds fixed-width ``az el`` rows (11 pairs per line, ``-1`` padding) for the BSRN archive layout.
+    按 BSRN 存档布局生成定宽 ``az el`` 行（每行 11 对，不足填 ``-1``）。
 
     Parameters
     ----------

@@ -135,7 +135,7 @@ bsrn-qc/
 │       │   ├── records_base.py        # ArchiveRecordBase (Pydantic + archive validation)
 │       │   ├── records_models.py      # explicit LR0001–LR4000CONST Pydantic models
 │       │   ├── formatting.py          # Fortran-style field formatting mixin
-│       │   └── validation.py          # Field validators (R validateFunc parity)
+│       │   └── validation.py          # BSRN archive field validators (LR_SPECS validate_func)
 │       ├── io/
 │       │   ├── reader.py              # Read xxxmmyy.dat.gz station-to-archive files
 │       │   ├── retrieval.py           # FTP downloads with retries

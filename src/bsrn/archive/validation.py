@@ -1,12 +1,13 @@
 """
-BSRN logical-record field validators (R ``1_validateFunc_headers.R`` + ``1_validateFunc_datas.R``).
+BSRN station-to-archive field validators.
 
-Each ``*_validateFunction`` name matches ``LR_SPECS`` ``validate_func``; Pydantic
-``ArchiveRecordBase`` runs them in a model validator. Code lists come from ``specs``
-(``QUANTITIES``, …).
+Each ``*_validateFunction`` name matches ``LR_SPECS`` ``validate_func``. The ``LR*`` models
+in :mod:`bsrn.archive.records_models` call them through Pydantic
+:class:`pydantic.functional_validators.AfterValidator` (scalar fields) and
+:func:`pydantic.field_validator` (LR0100 / LR4000 minute vectors with ``yearMonth``).
+Lookup tables live in :mod:`bsrn.archive.specs` (``QUANTITIES``, …).
 
-BSRN 逻辑记录字段校验（R ``1_validateFunc_*.R``）。函数名与 ``LR_SPECS`` 中 ``validate_func`` 一致，
-由 Pydantic ``ArchiveRecordBase`` 的模型校验器按名调用；分类编码表见 ``specs``。
+BSRN 台站存档字段校验器。标量字段经 ``AfterValidator``，LR0100/LR4000 分钟列经 ``field_validator`` 调用；编码表见 ``specs``。
 """
 
 import calendar
@@ -16,8 +17,8 @@ from datetime import datetime
 from .specs import QUANTITIES, SURFACES, TOPOGRAPHIES, PYRGEOMETER_BODY, PYRGEOMETER_DOME
 
 # =============================================================================
-# TRANSLATION OF: 1_validateFunc_headers.R — header / metadata fields (LR0001–LR0008)
-# R 对应 ``1_validateFunc_headers.R``：头记录与元数据字段（LR0001–LR0008）
+# Header / metadata logical records (LR0001–LR0008)
+# 头记录与元数据逻辑记录（LR0001–LR0008）
 # =============================================================================
 
 # --- Core Fortran-style checks (I / A / F widths, C numeric, L logical) / 核心 Fortran 风格校验 ---
@@ -27,8 +28,8 @@ def I_validateFunction(value, digits, v_min=0, v_max=None):
     """
     Validate integer ``value`` for Fortran ``I`` width and optional bounds.
 
-    Translates from R integer width checks (``1_validateFunc_headers.R``).
-    对应 R 整数宽度校验（``1_validateFunc_headers.R``）。
+    BSRN Fortran ``I`` width and optional numeric bounds.
+    BSRN Fortran ``I`` 宽度与可选数值范围。
 
     Parameters
     ----------
@@ -70,10 +71,10 @@ def I_validateFunction(value, digits, v_min=0, v_max=None):
 
 def C_validateFunction(value):
     """
-    Accept any non-empty numeric-like token (R ``C`` / free numeric).
+    Accept any non-empty numeric-like token (archive ``C`` / free numeric).
 
-    Translates from R ``C`` validation (``1_validateFunc_headers.R``).
-    对应 R ``C`` 校验（``1_validateFunc_headers.R``）。
+    Coefficient / free-numeric token rules for archive constants.
+    存档常数项 / 自由数值记号的校验规则。
 
     Parameters
     ----------
@@ -102,8 +103,8 @@ def A_validateFunction(value, maxLenght=float("inf")):
     """
     Validate non-empty string length for Fortran ``A`` fields.
 
-    Translates from R ``A`` validation (``1_validateFunc_headers.R``).
-    对应 R ``A`` 校验（``1_validateFunc_headers.R``）。
+    Fortran ``A`` (alphanumeric) width checks for archive strings.
+    存档字符串的 Fortran ``A`` 定宽规则。
 
     Parameters
     ----------
@@ -138,8 +139,8 @@ def F_validateFunction(value, w, d):
     """
     Validate float width for Fortran ``F{w}.{d}`` (integer and fractional parts).
 
-    Translates from R ``F`` validation (``1_validateFunc_headers.R``).
-    对应 R ``F`` 校验（``1_validateFunc_headers.R``）。
+    Fortran ``F`` width and decimal rules for archive floats.
+    存档浮点数的 Fortran ``F`` 宽度与小数位规则。
 
     Parameters
     ----------
@@ -183,8 +184,8 @@ def L_validateFunction(value):
     """
     Validate Python ``bool`` for Fortran logical ``L`` fields.
 
-    Translates from R ``L`` validation (``1_validateFunc_headers.R``).
-    对应 R ``L`` 校验（``1_validateFunc_headers.R``）。
+    Logical / boolean archive fields (``L`` format).
+    逻辑型存档字段（``L`` 格式）。
 
     Parameters
     ----------
@@ -216,8 +217,8 @@ def I2_validateFunction(value):
     """
     Validate Fortran ``I2`` integer field.
 
-    Translates from R ``I2`` token rule (``1_validateFunc_headers.R``).
-    对应 R ``I2`` 规则（``1_validateFunc_headers.R``）。
+    Two-digit Fortran ``I2`` archive integer token.
+    两位 Fortran ``I2`` 存档整型。
 
     Parameters
     ----------
@@ -244,8 +245,8 @@ def I3_validateFunction(value):
     """
     Validate Fortran ``I3`` integer field.
 
-    Translates from R ``I3`` token rule (``1_validateFunc_headers.R``).
-    对应 R ``I3`` 规则（``1_validateFunc_headers.R``）。
+    Three-digit Fortran ``I3`` archive integer token.
+    三位 Fortran ``I3`` 存档整型。
 
     Parameters
     ----------
@@ -272,8 +273,8 @@ def I4_validateFunction(value):
     """
     Validate Fortran ``I4`` integer field.
 
-    Translates from R ``I4`` token rule (``1_validateFunc_headers.R``).
-    对应 R ``I4`` 规则（``1_validateFunc_headers.R``）。
+    Four-digit Fortran ``I4`` archive integer token.
+    四位 Fortran ``I4`` 存档整型。
 
     Parameters
     ----------
@@ -300,8 +301,8 @@ def I5_validateFunction(value):
     """
     Validate Fortran ``I5`` integer field.
 
-    Translates from R ``I5`` token rule (``1_validateFunc_headers.R``).
-    对应 R ``I5`` 规则（``1_validateFunc_headers.R``）。
+    Five-digit Fortran ``I5`` archive integer token.
+    五位 Fortran ``I5`` 存档整型。
 
     Parameters
     ----------
@@ -328,8 +329,8 @@ def I8_validateFunction(value):
     """
     Validate Fortran ``I8`` integer field.
 
-    Translates from R ``I8`` token rule (``1_validateFunc_headers.R``).
-    对应 R ``I8`` 规则（``1_validateFunc_headers.R``）。
+    Eight-digit Fortran ``I8`` archive integer token (e.g. ``yyyymmdd``).
+    八位 Fortran ``I8`` 存档整型（如 ``yyyymmdd``）。
 
     Parameters
     ----------
@@ -1145,8 +1146,8 @@ def elevation_validateFunction(value):
 
 
 # =============================================================================
-# TRANSLATION OF: 1_validateFunc_datas.R — LR0100 / LR4000 minute-series fields
-# R 对应 ``1_validateFunc_datas.R``：LR0100 / LR4000 分钟序列字段
+# LR0100 / LR4000 minute-series fields
+# LR0100 / LR4000 分钟序列字段
 # =============================================================================
 
 # ``yearMonth`` token (seven chars ``YYYY-MM``). / ``yearMonth`` 七字符 ``YYYY-MM``。
@@ -1157,8 +1158,8 @@ def genericValidateFunction(value):
     """
     Validate ``yearMonth`` token (``A7`` in LR0100 / LR4000: ``'YYYY-MM'``).
 
-    Translates from R ``genericValidateFunction`` (``1_validateFunc_datas.R``).
-    对应 R ``genericValidateFunction``（``1_validateFunc_datas.R``）。
+    Validates ``yearMonth`` (``'YYYY-MM'``) for minute logical records.
+    校验分钟逻辑记录的 ``yearMonth``（``'YYYY-MM'``）。
 
     Parameters
     ----------
@@ -1193,8 +1194,8 @@ def LR0100_validateFunction(value, yearMonth=None):
     """
     Ensure minute-series length matches the month when ``yearMonth`` is set.
 
-    Translates from R ``LR0100_validateFunction`` (``1_validateFunc_datas.R``).
-    对应 R ``LR0100_validateFunction``（``1_validateFunc_datas.R``）。
+    Minute vector checks for LR0100 columns (length vs. calendar month).
+    LR0100 各列分钟序列长度与当月日历一致性检查。
 
     Parameters
     ----------
@@ -1230,8 +1231,8 @@ def LR4000_validateFunction(value, yearMonth=None):
     """
     Ensure LR4000 minute-series length matches the month when ``yearMonth`` is set.
 
-    Translates from R ``LR4000_validateFunction`` (``1_validateFunc_datas.R``).
-    对应 R ``LR4000_validateFunction``（``1_validateFunc_datas.R``）。
+    Minute vector checks for LR4000 columns (length vs. calendar month).
+    LR4000 各列分钟序列长度与当月日历一致性检查。
 
     Parameters
     ----------

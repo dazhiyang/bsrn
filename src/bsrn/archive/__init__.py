@@ -1,15 +1,12 @@
 """
-BSRN archive: logical-record specs, validation, and R-style helpers.
+BSRN station-to-archive: logical-record specs, Pydantic models, validators, and ASCII formatters.
 
-R reference layout under ``data/R``:
+- ``specs`` — ``LR_SPECS`` and supporting tables (stations, quantities, surfaces, …).
+- ``records_base`` / ``records_models`` — Pydantic ``LR*`` models; BSRN checks use ``AfterValidator`` and ``field_validator`` (see ``records_models``).
+- ``validation`` — Python callables referenced by each field’s ``validate_func`` string.
+- ``archive_lr_formats`` — ``get_bsrn_format`` on each LR plus ``get_azimuth_elevation`` for LR0004 horizon lines.
 
-- ``0_data.R`` — table placeholders (A1–A7); Python: ``specs`` (``LR_SPECS`` + station / code tables)
-- ``1_utils.R`` — horizon layout helper; Python: ``archive_lr_formats.get_azimuth_elevation`` (month length: ``calendar.monthrange`` in LR formatters)
-- ``0_bsrnFormats_*.R`` — format strings; Python: ``records_models`` (``LR*``) + ``get_bsrn_format`` on each model
-- ``1_validateFunc_*.R`` — Python: ``validation``
-- ``2_R6Class_*.R`` — Python: ``records_models`` (``LR0001`` … ``LR4000``); ``archive_lr_formats`` (``get_bsrn_format`` + ``get_azimuth_elevation``)
-
-BSRN 存档：逻辑记录规范、校验与 R 风格辅助函数。上述 R 文件与 Python 子模块对应关系见源码注释。
+BSRN 台站存档：逻辑记录规范、Pydantic 模型、字段校验与定宽 ASCII 格式化。
 """
 
 from . import specs, validation
