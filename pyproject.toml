@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bsrn"
+version = "0.1.4"
+authors = [
+  { name="Dazhi Yang" },
+]
+description = "A Python package for quality control (QC) checks on BSRN station-to-archive files."
+readme = "README.md"
+license = {file = "LICENSE"}
+requires-python = ">=3.9"
+keywords = ["bsrn", "solar radiation", "quality control", "irradiance", "solar energy"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+]
+dependencies = [
+    "pandas",
+    "numpy",
+    "pydantic>=2.5,<3",
+    "requests",
+    "huggingface_hub",
+    "pyarrow",
+]
+
+[project.optional-dependencies]
+viz = [
+    "plotnine",
+    "matplotlib",
+    "scipy",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/dazhiyang/bsrn"
+"Bug Tracker" = "https://github.com/dazhiyang/bsrn/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]

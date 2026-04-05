@@ -1,0 +1,315 @@
+# bsrn
+
+[![PyPI version](https://img.shields.io/pypi/v/bsrn.svg?v=0.1.4)](https://pypi.org/project/bsrn/)
+[![Python Versions](https://img.shields.io/pypi/pyversions/bsrn.svg)](https://pypi.org/project/bsrn/)
+[![Documentation Status](https://readthedocs.org/projects/bsrn/badge/?version=latest)](https://bsrn.readthedocs.io/en/latest/?badge=latest)
+[![Downloads](https://static.pepy.tech/badge/bsrn)](https://pepy.tech/project/bsrn)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+
+This **GitHub repository** is **`dazhiyang/bsrn`**: the source code and development tooling for the **`bsrn`** Python package.
+
+**`bsrn`** is a community-developed toolbox that provides a set of robust functions and classes for processing and analyzing solar radiation data. The core mission of **`bsrn`** is to provide an open, reliable, interoperable, and benchmark-standard set of tools tailored specifically for the **Baseline Surface Radiation Network (BSRN)**. 
+
+It features automated quality control (QC), high-precision solar geometry, clear-sky modeling, clear-sky detection (CSD), cloud enhancement event (CEE) detection, irradiance separation, and comprehensive data retrieval and visualization capabilities.
+
+## 📖 [Documentation (Read the Docs)](https://bsrn.readthedocs.io)
+
+## 🚀 Getting Started
+
+### Installation
+
+The core `bsrn` package is designed to be lightweight and fast. You can install it using pip:
+
+**From PyPI (stable release):**
+```bash
+pip install bsrn
+```
+
+**From GitHub (latest development version):**
+```bash
+pip install git+https://github.com/dazhiyang/bsrn.git
+```
+
+### Optional Visualization Tools
+If you want to use the built-in plotting features (like data availability charts or clear-sky calendars), you will need to install the optional visualization dependencies (plotnine, matplotlib, and scipy):
+
+```bash
+pip install bsrn[viz]
+```
+
+## Usage
+For standard quality control and clear-sky modeling, simply import the base package:
+
+```python
+import bsrn
+
+# Access core modules like bsrn.qc, bsrn.modeling, bsrn.io
+```
+
+If you installed the [viz] extra and want to generate plots, you must explicitly import the visualization submodule:
+
+```python
+import bsrn.visualization
+
+# Access plotting tools like bsrn.visualization.calendar.plot_calendar()
+```
+
+### Quick Example (Single-File Workflow)
+
+```python
+from bsrn.io.retrieval import download_bsrn_stn, get_bsrn_file_inventory
+from bsrn.io.reader import read_station_to_archive
+from bsrn.physics.geometry import add_solpos_columns
+from bsrn.modeling.clear_sky import add_clearsky_columns
+from bsrn.qc.wrapper import run_qc
+
+# 1. See what data is available
+inventory = get_bsrn_file_inventory(["QIQ"], username="your_user", password="your_pass")
+
+# 2. Download data for a station
+download_bsrn_stn("QIQ", "data/QIQ", username="your_user", password="your_pass")
+
+# 3. Read a single monthly file (one file at a time)
+df = read_station_to_archive("data/QIQ/qiq0124.dat.gz")
+
+# 4. Add solar position (recommended before time-averaging or clear-sky)
+df = add_solpos_columns(df, "QIQ")
+
+# 5. Add clear-sky reference columns (defaults to Ineichen)
+df = add_clearsky_columns(df, "QIQ")
+
+# 6. Run Quality Control (QC)
+df = run_qc(df, "QIQ")
+
+# 7. Add satellite-derived CAMS CRS all-sky columns
+from bsrn.io.crs import add_crs_columns
+df = add_crs_columns(df, "QIQ")
+
+# 8. Visualize with plotnine
+from bsrn.visualization.clearsky_models import plot_clearsky_models
+plot_clearsky_models(df, "QIQ", date="2024-06-20", save_path="clearsky_qiq.pdf")
+```
+
+## 🛠 Features
+
+The QC features, of which the implementation is primarily based on the [BSRN Operations Manual (2018)](https://bsrn.awi.de/) and [Forstinger et al. (2021)](https://doi.org/10.18086/swc.2021.36). See code for other references.
+
+- **Level 1 (Physically Possible):** Absolute physical bounds for $G_h, B_n, D_h$, and $L_d$.
+- **Level 2 (Extremely Rare):** Climatological limits for specific regimes.
+- **Level 3 (Comparison):** Consistency checks ($G_h$ vs $B_n \cos Z + D_h$) with zenith-dependent thresholds.
+- **Level 4 (Diffuse Ratio):** Diffuse-fraction and $k$–$k_t$ checks combining $G_h$, $D_h$, and extraterrestrial irradiance.
+- **Level 5 (K-Indices):** Advanced clearness-index and $k_b$/$k_t$ index tests using clear-sky benchmarks and site elevation.
+- **Level 6 (Tracker-Off Detection):** Identify tracking errors by comparing measured values with clear-sky and extraterrestrial irradiance.
+
+Other important features include:
+
+- **Solar Geometry:** Native NREL SPA implementation for high-precision solar position calculations.
+- **Clear-Sky Models:** Ineichen (monthly Linke turbidity), McClear (CAMS SoDa API, from 2004 onward), and REST2 (MERRA-2 from Hugging Face).
+- **Satellite Data:** Load CAMS solar radiation service (CRS) and National Solar Radiation Database (NSRDB) all-sky irradiance directly from Hugging Face into memory.
+- **Clear-Sky Detection (CSD):** Reno, Ineichen, Lefevre, and BrightSun methods to identify clear-sky periods from irradiance time series.
+- **Cloud Enhancement Event (CEE) Detection:** Killinger, Yang, and Gueymard methods to detect events when measured GHI significantly exceeds references.
+- **Irradiance Separation:** Erbs, BRL, Engerer2, and Yang4 models to estimate diffuse fraction and DHI/BNI from GHI.
+- **Robust Retrieval:** High-level API for FTP downloads from BSRN-AWI with exponential backoff retries (analysis functions assume **one station-to-archive file at a time**).
+- **Station-to-archive formatting:** The `bsrn.archive` subpackage provides logical-record specifications (`LR_SPECS`), Fortran-style validation, and ASCII `get_bsrn_format` output for BSRN header and data records (`LR0001`–`LR4000`). Concrete `LR*` types are Pydantic models built from `LR_SPECS` in `records_dynamic`; `get_azimuth_elevation` lives in `api`.
+- **Visualization:** Data availability heatmaps and k vs kt separation plots via the very pretty `plotnine` (which reminds me of the good old R days).
+
+## 📂 File Structure
+
+> [!NOTE]
+> Not all files are uploaded with Git. Data files and intermediate outputs are excluded via `.gitignore`.
+
+```text
+bsrn-qc/
+├── pyproject.toml
+├── LICENSE
+├── README.md
+├── .gitignore
+├── .readthedocs.yaml              # Read the Docs build config
+├── src/
+│   └── bsrn/
+│       ├── __init__.py
+│       ├── constants.py               # Station database, Linke turbidity & physical constants
+│       ├── archive/                   # Station-to-archive logical records (WRMC-style LR layouts)
+│       │   ├── specs.py               # LR_SPECS + station directory & A3–A7 code tables
+│       │   ├── api.py                 # get_azimuth_elevation (LR0004 horizon layout)
+│       │   ├── records_base.py        # ArchiveRecordBase (Pydantic + archive validation)
+│       │   ├── records_dynamic.py     # LR0001–LR4000CONST models from LR_SPECS
+│       │   ├── archive_lr_formats.py  # get_bsrn_format implementations per LR
+│       │   ├── formatting.py          # Fortran-style field formatting mixin
+│       │   └── validation.py          # Field validators (R validateFunc parity)
+│       ├── io/
+│       │   ├── reader.py              # Read xxxmmyy.dat.gz station-to-archive files
+│       │   ├── retrieval.py           # FTP downloads with retries
+│       │   ├── merra2.py              # MERRA-2 parquet fetch (Hugging Face → RAM)
+│       │   ├── mcclear.py             # SoDa McClear client helpers
+│       │   ├── crs.py                 # SoDa CAMS solar radiation service (CRS) client helpers
+│       │   ├── nsrdb.py               # NREL NSRDB all-sky data client helpers
+│       │   └── writers.py             # Export results
+│       ├── physics/
+│       │   ├── spa.py                 # Native NREL SPA (solar position algorithm)
+│       │   └── geometry.py            # Solar position and extraterrestrial irradiance
+│       ├── qc/
+│       │   ├── ppl.py                 # Physically possible limits (Level 1)
+│       │   ├── erl.py                 # Extremely rare limits (Level 2)
+│       │   ├── closure.py             # Internal consistency checks (Level 3)
+│       │   ├── diff_ratio.py          # Diffuse ratio checks (Level 4)
+│       │   ├── k_index.py             # Radiometric index tests (Level 5)
+│       │   ├── tracker.py             # Solar tracker off detection (Level 6)
+│       │   └── wrapper.py             # High-level QC pipeline
+│       ├── visualization/
+│       │   ├── availability.py        # File coverage heatmaps (plotnine)
+│       │   ├── qc_table.py            # QC result tables
+│       │   ├── separation.py          # Decomposition visualization
+│       │   └── timeseries.py          # Time series plots
+│       ├── utils/
+│       │   ├── calculations.py        # Supporting math
+│       │   ├── quality.py             # Quality utilities
+│       │   ├── clear_sky_detection.py # Clear-sky detection (Reno, Ineichen, Lefevre, BrightSun)
+│       │   └── cee_detection.py       # Cloud enhancement detection (Killinger, Yang, Gueymard)
+│       └── modeling/
+│           ├── clear_sky.py           # Ineichen clear-sky model
+│           └── separation.py          # Irradiance separation (Erbs, BRL, Engerer2, Yang4)
+├── docs/
+│   ├── conf.py                        # Sphinx config; source dir = docs/ (tutorials + sphinx/ RST)
+│   ├── index.rst                      # Site homepage (root index.html for Read the Docs)
+│   ├── requirements.txt               # Sphinx / Read the Docs dependencies
+│   ├── examples/                      # Examples landing page (index.rst) + optional scripts
+│   │   └── index.rst
+│   ├── tutorials/                     # Jupyter tutorials + index.rst (nbsphinx)
+│   │   ├── 1.data_downloading.ipynb
+│   │   ├── 2.quality_control.ipynb
+│   │   ├── 3.time_averaging.ipynb
+│   │   ├── 4.clear_sky_detection.ipynb
+│   │   └── 5.cloud_enhancement_event.ipynb
+│   └── sphinx/                        # RST (user_guide, api, _static); not the doc homepage
+│       ├── api/                       # API reference (io, qc, physics, …)
+│       └── user_guide/                # installation, getting_started, package_overview, …
+```
+
+## 📖 Examples
+
+### Solar Position
+
+```python
+import pandas as pd
+from bsrn.physics.geometry import get_solar_position, get_bni_extra
+
+times = pd.date_range("2024-07-01", periods=1440, freq="1min", tz="UTC")
+solpos = get_solar_position(times, lat=47.80, lon=124.49, elev=170)
+
+print(solpos[["zenith", "apparent_zenith", "azimuth"]].head())
+```
+
+### Extraterrestrial Irradiance
+
+```python
+from bsrn.physics.geometry import get_bni_extra
+
+bni_extra = get_bni_extra(times)  # Spencer (1971) method
+```
+
+### Clear-Sky GHI (Ineichen)
+
+```python
+from bsrn.modeling.clear_sky import add_clearsky_columns
+
+# Automatically computes solar geometry if missing, but it is highly
+# recommended to call `add_solpos_columns(df)` first for 1-minute data!
+df = add_clearsky_columns(df, "QIQ")
+# Adds columns: ghi_clear, bni_clear, dhi_clear
+```
+
+### Clear-Sky GHI from McClear (CAMS)
+
+```python
+from bsrn.modeling.clear_sky import add_clearsky_columns
+
+# McClear data are available from 2004-01-01 onward.
+# McClear 数据自 2004-01-01 起可用。
+df = add_clearsky_columns(
+    df,
+    station_code="QIQ",
+    model="mcclear",
+    mcclear_email="your_email@example.com",  # SoDa / CAMS account email
+)
+# Adds columns: ghi_clear, bni_clear, dhi_clear based on CAMS McClear
+```
+
+### Clear-Sky GHI from REST2 (MERRA-2 via Hugging Face)
+
+REST2 uses MERRA-2 atmospheric inputs **only** from the Hugging Face dataset **[dazhiyang/bsrn-merra2](https://huggingface.co/datasets/dazhiyang/bsrn-merra2)** (hourly Parquet files per station, `station_code/*.parquet`). The `bsrn` package fetches them **into RAM** (no disk cache) when `model="rest2"` is used.
+
+```python
+from bsrn.modeling.clear_sky import add_clearsky_columns
+
+# MERRA-2 is fetched from Hugging Face into RAM automatically.
+df = add_clearsky_columns(df, station_code="QIQ", model="rest2")
+# Adds columns: ghi_clear, bni_clear, dhi_clear based on REST2 + MERRA-2
+```
+
+The dataset README for Hugging Face is maintained in this repo at `data/bsrn_static_assets/README.md` (published to the Hub separately from PyPI).
+
+### All-Sky GHI from NSRDB (NREL via Hugging Face)
+
+Similar to REST2, NSRDB all-sky data is fetched directly from the Hugging Face dataset **[dazhiyang/bsrn-nsrdb-conus](https://huggingface.co/datasets/dazhiyang/bsrn-nsrdb-conus)** (and other variants).
+
+```python
+from bsrn.io.nsrdb import add_nsrdb_columns
+
+# Fetch NSRDB all-sky GHI/DNI/DHI from Hugging Face
+df = add_nsrdb_columns(df, station_code="QIQ", variant="conus")
+# Adds columns: ghi_nsrdb, bni_nsrdb, dhi_nsrdb
+```
+
+### Clear-Sky Detection
+
+```python
+from bsrn.utils import detect_clearsky
+
+# Requires GHI and clear-sky GHI (e.g. from add_clearsky_columns)
+out = detect_clearsky("reno", ghi=df["ghi"], ghi_clear=df["ghi_clear"], times=df.index)
+# out["is_clearsky"] is True/False/NA; out["cloud_flag"] is 0/1/NaN
+# Other methods: "ineichen", "lefevre", "brightsun" (different inputs)
+```
+
+### Cloud Enhancement Event (CEE) Detection
+
+```python
+from bsrn.utils.cee_detection import detect_cee
+
+# Killinger CEE detection: requires 1‑min GHI, clear-sky GHI, zenith, and a 1‑min index
+out_cee_k = detect_cee(
+    "killinger",
+    ghi=df["ghi"],
+    ghi_clear=df["ghi_clear"],
+    zenith=df["zenith"],
+    times=df.index,
+)
+# out_cee_*["is_enhancement"] is True/False/NA; out_cee_*["cee_flag"] is 0/1/NaN
+```
+
+### Data Availability Heatmap
+
+```python
+from bsrn.visualization.availability import plot_bsrn_availability
+
+fig = plot_bsrn_availability(inventory_df, station_code="QIQ")
+fig.save("availability.png", dpi=300)
+```
+
+### Station-to-archive logical records (`bsrn.archive`)
+
+Logical records are **Pydantic v2** models (`LR0001`, …, `LR0100`, `LR4000`, …) built from `LR_SPECS` in `records_dynamic`. The legacy umbrella type **`BSRNRecord` is removed**—use a concrete `LR*` model and call `get_bsrn_format` on the instance.
+
+Use `LR_SPECS` for field names, formats, and validators; build text with `LR0001(**fields).get_bsrn_format()`, or for minute LRs pass column series plus `yearMonth` into `LR0100` / `LR4000` then `get_bsrn_format(changed=...)`.
+
+```python
+from bsrn.archive import LR0001, LR_SPECS
+
+# Required keys for LR0001 are listed in LR_SPECS["LR0001"]
+# out = LR0001(stationNumber=94, month=1, year=2024, version=1).get_bsrn_format()
+```
+
+## 📜 License
+
+MIT License. See [LICENSE](LICENSE) for details.

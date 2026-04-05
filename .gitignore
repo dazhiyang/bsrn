@@ -1,0 +1,40 @@
+# Standard Python .gitignore
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Environments
+.env/
+.venv/
+venv/
+env/
+conda-env/
+/bsrn/
+
+# IDEs
+.vscode/
+.idea/
+
+# Data 
+data/
+*.log
+
+# Miscellaneous
+.DS_Store
+*.pdf
+tmp_plot_*.py
+
+# Tests
+tests/
+
+# Sphinx
+docs/_build/
+docs/sphinx/_build/
+docs/sphinx/generated/
+docs/sphinx/api/generated/
