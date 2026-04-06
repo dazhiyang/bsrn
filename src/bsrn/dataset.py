@@ -54,6 +54,14 @@ class BSRNDataset(BaseModel):
 
     单月 BSRN 数据集：站点标识 + 分钟级数据。
 
+    Typical enrichment on the cached :meth:`data` frame is
+    :meth:`solpos`, then :meth:`clear_sky`, then :meth:`qc`
+    (each mutates that frame in place and returns it).
+
+    常见流程为在缓存的 :meth:`data` 帧上依次调用
+    :meth:`solpos`、:meth:`clear_sky`、:meth:`qc`
+    （均原地修改该帧并返回同一对象）。
+
     Parameters
     ----------
     station_code : str
@@ -232,7 +240,7 @@ class BSRNDataset(BaseModel):
         The base frame contains only the LR0100 **mean / scalar**
         columns under short names (``ghi``, ``bni``, ``dhi``,
         ``lwd``, ``temp``, ``rh``, ``pressure``). It is built once
-        and cached so that pipeline methods (``add_solpos``, etc.)
+        and cached so that pipeline methods (``solpos``, etc.)
         can enrich it in-place.
 
         基础帧仅包含 LR0100 均值/标量列的短名。首次构建后缓存，
@@ -292,7 +300,7 @@ class BSRNDataset(BaseModel):
     #  管线方法（委托给独立函数）                                           #
     # ------------------------------------------------------------------ #
 
-    def add_solpos(self):
+    def solpos(self):
         """
         Add solar position and extraterrestrial irradiance columns
         to the cached ``data()`` frame.
@@ -316,7 +324,7 @@ class BSRNDataset(BaseModel):
             lat=self.lat, lon=self.lon, elev=self.elev,
         )
 
-    def add_clearsky(self, model="ineichen", mcclear_email=None):
+    def clear_sky(self, model="ineichen", mcclear_email=None):
         """
         Add clear-sky irradiance columns to the cached ``data()``
         frame.
@@ -350,8 +358,8 @@ class BSRNDataset(BaseModel):
             model=model, mcclear_email=mcclear_email,
         )
 
-    def run_qc(self, tests=('ppl', 'erl', 'closure',
-                            'diff_ratio', 'k_index', 'tracker')):
+    def qc(self, tests=('ppl', 'erl', 'closure',
+                        'diff_ratio', 'k_index', 'tracker')):
         """
         Run QC tests and add flag columns to the cached ``data()``
         frame.

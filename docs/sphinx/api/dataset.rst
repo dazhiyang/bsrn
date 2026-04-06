@@ -40,9 +40,9 @@ Pipeline methods
 .. autosummary::
    :toctree: generated/
 
-   bsrn.dataset.BSRNDataset.add_solpos
-   bsrn.dataset.BSRNDataset.add_clearsky
-   bsrn.dataset.BSRNDataset.run_qc
+   bsrn.dataset.BSRNDataset.solpos
+   bsrn.dataset.BSRNDataset.clear_sky
+   bsrn.dataset.BSRNDataset.qc
 
 Plotting
 --------

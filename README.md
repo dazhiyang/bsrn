@@ -63,9 +63,9 @@ import bsrn
 ds = bsrn.BSRNDataset.from_file("data/QIQ/qiq0125.dat.gz")
 
 # Pipeline: solar position → clear-sky → QC (each returns a DataFrame)
-df = ds.add_solpos()
-df = ds.add_clearsky()
-df = ds.run_qc()
+df = ds.solpos()
+df = ds.clear_sky()
+df = ds.qc()
 
 # Visualize directly from the dataset (requires bsrn[viz])
 ds.plot.daily("1995-01-15")  # plots a single day
