@@ -1,6 +1,6 @@
 # bsrn
 
-[![PyPI version](https://img.shields.io/pypi/v/bsrn.svg?v=0.2.0)](https://pypi.org/project/bsrn/)
+[![PyPI version](https://img.shields.io/pypi/v/bsrn.svg?v=0.2.1)](https://pypi.org/project/bsrn/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/bsrn.svg)](https://pypi.org/project/bsrn/)
 [![Documentation Status](https://readthedocs.org/projects/bsrn/badge/?version=latest)](https://bsrn.readthedocs.io/en/latest/?badge=latest)
 [![Downloads](https://static.pepy.tech/badge/bsrn)](https://pepy.tech/project/bsrn)
