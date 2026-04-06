@@ -14,14 +14,14 @@ import pandas as pd
 _MIN_VALID_FRACTION = 0.5  # Strict majority (> half) for coverage checks. / 覆盖判定的严格多数
 
 
-def _period_delta(rule):
+def _period_delta(freq):
     """
     Map a fixed pandas frequency string to window length Δ.
     将固定 pandas 频率字符串映射为窗长 Δ。
 
     Parameters
     ----------
-    rule : str
+    freq : str
         Fixed offset alias (e.g. ``'30min'``, ``'1h'``). Must resolve to a fixed step.
         固定偏移别名（如 ``'30min'``、``'1h'``），须为固定步长。
 
@@ -33,14 +33,14 @@ def _period_delta(rule):
     Raises
     ------
     ValueError
-        If ``rule`` is not a fixed frequency. / ``rule`` 非固定频率时抛出。
+        If ``freq`` is not a fixed frequency. / ``freq`` 非固定频率时抛出。
     """
-    off = pd.tseries.frequencies.to_offset(rule)
+    off = pd.tseries.frequencies.to_offset(freq)
     try:
         return pd.Timedelta(off)
     except (ValueError, TypeError) as e:
         raise ValueError(
-            f"rule {rule!r} must be a fixed frequency (e.g. '30min', '1h'). / "
+            f"freq {freq!r} must be a fixed frequency (e.g. '30min', '1h'). / "
             "需要固定频率（如 '30min', '1h'）。"
         ) from e
 
@@ -74,16 +74,16 @@ def _archive_timestep_1_or_3(index):
     return pd.Timedelta(minutes=1)
 
 
-def _label_grid(index, rule):
+def _label_grid(index, freq):
     """
-    Build a regular label grid from ``floor(min)`` through ``ceil(max)`` at ``rule``.
-    自 ``floor(min)`` 至 ``ceil(max)`` 按 ``rule`` 生成规则标签网格。
+    Build a regular label grid from ``floor(min)`` through ``ceil(max)`` at ``freq``.
+    自 ``floor(min)`` 至 ``ceil(max)`` 按 ``freq`` 生成规则标签网格。
 
     Parameters
     ----------
     index : pandas.DatetimeIndex
         Data extent. / 数据时间范围。
-    rule : str
+    freq : str
         Bin frequency. / 分箱频率。
 
     Returns
@@ -91,14 +91,14 @@ def _label_grid(index, rule):
     pandas.DatetimeIndex
         Labels inclusive of endpoints; empty if invalid range. / 含端点的标签；范围无效则为空。
     """
-    lo = index.min().floor(rule)
-    hi = index.max().ceil(rule)
+    lo = index.min().floor(freq)
+    hi = index.max().ceil(freq)
     if lo > hi:
         return pd.DatetimeIndex([], tz=index.tz)
-    return pd.date_range(lo, hi, freq=rule, inclusive="both", tz=index.tz)
+    return pd.date_range(lo, hi, freq=freq, inclusive="both", tz=index.tz)
 
 
-def _trim_labels_for_alignment(labels, index, rule, alignment,
+def _trim_labels_for_alignment(labels, index, freq, alignment,
                                match_ceiling_labels=True):
     """
     Drop edge labels that would mix months (align with floor / ceiling / center grids).
@@ -110,7 +110,7 @@ def _trim_labels_for_alignment(labels, index, rule, alignment,
         Full grid from :func:`_label_grid`. / :func:`_label_grid` 的完整网格。
     index : pandas.DatetimeIndex
         Actual data index (defines month span ``lo``, ``hi``). / 实际数据索引（定义月界 ``lo``、``hi``）。
-    rule : str
+    freq : str
         Bin frequency. / 分箱频率。
     alignment : {'floor', 'ceiling', 'center'}
         Window alignment. / 窗对齐方式。
@@ -130,8 +130,8 @@ def _trim_labels_for_alignment(labels, index, rule, alignment,
     """
     if len(labels) == 0:
         return labels
-    lo = index.min().floor(rule)
-    hi = index.max().ceil(rule)
+    lo = index.min().floor(freq)
+    hi = index.max().ceil(freq)
     if alignment == "floor":
         return labels[labels < hi]
     if alignment == "ceiling":
@@ -298,7 +298,7 @@ def _aggregate(part, aggfunc):
     return aggfunc(part)
 
 
-def pretty_average(df, rule, alignment="ceiling",
+def pretty_average(df, freq, alignment="ceiling",
                    aggfunc="mean", resolution=None, match_ceiling_labels=True):
     """
     Average ``df`` over explicit labeled windows (not pandas ``resample`` semantics).
@@ -309,7 +309,7 @@ def pretty_average(df, rule, alignment="ceiling",
     df : pandas.DataFrame
         Must use a :class:`~pandas.DatetimeIndex`.
         须为 :class:`~pandas.DatetimeIndex`。
-    rule : str
+    freq : str
         Fixed bin frequency (e.g. ``'1h'``, ``'30min'``). / 固定分箱频率。
     alignment : {'floor', 'ceiling', 'center'}, default ``'ceiling'``
         **floor** ``[L, L+Δ)`` · **ceiling** ``(L-Δ, L]`` · **center** ``[L-Δ/2+res, L+Δ/2]``.
@@ -343,11 +343,11 @@ def pretty_average(df, rule, alignment="ceiling",
     if df.empty:
         return df.copy()
 
-    delta = _period_delta(rule)
+    delta = _period_delta(freq)
     res = resolution if resolution is not None else _archive_timestep_1_or_3(df.index)
-    labels = _label_grid(df.index, rule)
+    labels = _label_grid(df.index, freq)
     labels = _trim_labels_for_alignment(
-        labels, df.index, rule, alignment, match_ceiling_labels=match_ceiling_labels
+        labels, df.index, freq, alignment, match_ceiling_labels=match_ceiling_labels
     )
     if len(labels) == 0:
         return df.iloc[0:0].copy()

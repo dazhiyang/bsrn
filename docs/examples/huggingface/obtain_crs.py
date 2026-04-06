@@ -65,8 +65,8 @@ df = bsrn.io.crs.add_crs_columns(df, station_code=station_code)
 # 执行时间平均（例如，30 分钟居中平均）
 print("Performing 30-min centered time averaging...")
 df_avg = bsrn.utils.pretty_average(
-    df, 
-    rule="30min", 
+    df,
+    freq="30min",
     alignment="center",
     match_ceiling_labels=True
 )

@@ -5,13 +5,16 @@ Encapsulates station identity, resolved geographic metadata, and minute-
 resolution data in a single Pydantic model. ``lr0100`` is the source of
 truth for minute data; ``data()`` returns a cached ``DataFrame`` with
 only the mean/value columns by default. LR0300 / LR4000 columns are
-available on demand via ``data(include=[...])``. Pipeline methods
-(solar position, clear-sky, QC) mutate the cached frame in-place.
+available on demand via ``data(include=[...])``. Most pipeline methods
+(solar position, clear-sky, QC) mutate the cached frame in-place;
+the ``average`` method replaces the cache with a coarser-index result
+from :func:`~bsrn.utils.averaging.pretty_average`.
 
 BSRN 中心数据集：将一个月度站点文件封装为带类型校验的对象。``lr0100``
 为分钟数据源；``data()`` 返回仅含均值列的缓存 ``DataFrame``。
-LR0300 / LR4000 列按需通过 ``data(include=[...])`` 获取。管线方法
-直接修改缓存帧。
+LR0300 / LR4000 列按需通过 ``data(include=[...])`` 获取。多数管线方法
+原地修改缓存；``average`` 方法以
+:func:`~bsrn.utils.averaging.pretty_average` 的较粗索引结果替换缓存。
 """
 
 from __future__ import annotations
@@ -56,11 +59,14 @@ class BSRNDataset(BaseModel):
 
     Typical enrichment on the cached :meth:`data` frame is
     :meth:`solpos`, then :meth:`clear_sky`, then :meth:`qc`
-    (each mutates that frame in place and returns it).
+    (each mutates that frame in place and returns it). :meth:`average`
+    replaces the cache with a coarser time series from
+    :func:`~bsrn.utils.averaging.pretty_average`.
 
     常见流程为在缓存的 :meth:`data` 帧上依次调用
     :meth:`solpos`、:meth:`clear_sky`、:meth:`qc`
-    （均原地修改该帧并返回同一对象）。
+    （均原地修改该帧并返回同一对象）。:meth:`average` 以
+    :func:`~bsrn.utils.averaging.pretty_average` 的结果替换缓存（较粗时间索引）。
 
     Parameters
     ----------
@@ -240,7 +246,7 @@ class BSRNDataset(BaseModel):
         The base frame contains only the LR0100 **mean / scalar**
         columns under short names (``ghi``, ``bni``, ``dhi``,
         ``lwd``, ``temp``, ``rh``, ``pressure``). It is built once
-        and cached so that pipeline methods (``solpos``, etc.)
+        and cached so that pipeline methods (``solpos``, ``average``, etc.)
         can enrich it in-place.
 
         基础帧仅包含 LR0100 均值/标量列的短名。首次构建后缓存，
@@ -385,6 +391,68 @@ class BSRNDataset(BaseModel):
             lat=self.lat, lon=self.lon, elev=self.elev,
             tests=tests,
         )
+
+    def average(self, freq, alignment="ceiling", aggfunc="mean",
+                match_ceiling_labels=True):
+        """
+        Time-average the cached ``data()`` with explicit labeled windows.
+
+        使用显式标签窗对缓存的 ``data()`` 做时间平均。
+
+        Delegates to :func:`~bsrn.utils.averaging.pretty_average` and
+        **replaces** the internal cache with the returned frame (new index).
+
+        委托 :func:`~bsrn.utils.averaging.pretty_average`，并以返回帧**替换**
+        内部缓存（新索引）。
+
+        Native timestep for **center** windows is taken from ``self.resolution``
+        (minutes) when set; otherwise passed as ``None`` for
+        :func:`~bsrn.utils.averaging.pretty_average` to infer.
+
+        **center** 窗的原生步长取自 ``self.resolution``（分钟）；未设置时传
+        ``None`` 由 :func:`~bsrn.utils.averaging.pretty_average` 推断。
+
+        Parameters
+        ----------
+        freq : str
+            Fixed bin frequency (e.g. ``'1h'``, ``'30min'``).
+            固定分箱频率。
+        alignment : {'floor', 'ceiling', 'center'}, optional
+            Window alignment (default ``'ceiling'``).
+            窗对齐方式（默认 ``'ceiling'``）。
+        aggfunc : str or callable, optional
+            Aggregation function (default ``'mean'``).
+            聚合函数（默认 ``'mean'``）。
+        match_ceiling_labels : bool, optional
+            When ``alignment='center'``, monthly edge trim style (default
+            ``True``, ceiling-like).
+            ``alignment='center'`` 时的月界裁剪方式（默认 ``True``，类 ceiling）。
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per output label; also stored as the new cache.
+
+        Raises
+        ------
+        TypeError
+            If ``data().index`` is not a :class:`~pandas.DatetimeIndex`.
+            ``data()`` 索引非 :class:`~pandas.DatetimeIndex` 时。
+        ValueError
+            Propagated from :func:`~bsrn.utils.averaging.pretty_average` when
+            ``freq`` is not a fixed frequency.
+            ``freq`` 非固定频率等由 ``pretty_average`` 抛出。
+        """
+        from .utils.averaging import pretty_average
+        res = None
+        if self.resolution is not None:
+            res = pd.Timedelta(minutes=int(self.resolution))
+        out = pretty_average(
+            self.data(), freq, alignment=alignment, aggfunc=aggfunc,
+            resolution=res, match_ceiling_labels=match_ceiling_labels,
+        )
+        self._df_cache = out
+        return out
 
     # ------------------------------------------------------------------ #
     #  Private helpers                                                      #

@@ -43,6 +43,7 @@ Pipeline methods
    bsrn.dataset.BSRNDataset.solpos
    bsrn.dataset.BSRNDataset.clear_sky
    bsrn.dataset.BSRNDataset.qc
+   bsrn.dataset.BSRNDataset.average
 
 Plotting
 --------
