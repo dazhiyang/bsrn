@@ -52,6 +52,37 @@ _QC_MARKER_STROKE = 0.12
 _QC_MARKER_LEGEND_SIZE = _QC_MARKER_SIZE * 2
 _QC_MARKER_LEGEND_STROKE = _QC_MARKER_STROKE * 2
 
+# LR_SPECS missing tokens for plot-only masking (does not alter :meth:`BSRNDataset.data`).
+# LR_SPECS 缺失码，仅用于绘图前掩膜（不修改 :meth:`BSRNDataset.data`）。
+_PLOT_MISSING_I4 = frozenset(
+    {"ghi", "bni", "dhi", "lwd", "pressure", "swu", "lwu", "net"}
+)
+_PLOT_MISSING_F51 = frozenset({"temp", "rh"})
+_PLOT_MISSING_LR4000_TEMPS = frozenset(
+    {"dt1d", "dt2d", "dt3d", "btd", "dt1u", "dt2u", "dt3u", "btu"}
+)
+
+
+def _mask_bsrn_missing_for_plot(df: pd.DataFrame) -> pd.DataFrame:
+    """Replace BSRN archive sentinels with NaN for line/point layers only."""
+    out = df.copy()
+    for c in _PLOT_MISSING_I4:
+        if c not in out.columns:
+            continue
+        col = pd.to_numeric(out[c], errors="coerce")
+        out[c] = col.mask(col == -999, np.nan)
+    for c in _PLOT_MISSING_F51:
+        if c not in out.columns:
+            continue
+        col = pd.to_numeric(out[c], errors="coerce")
+        out[c] = col.mask(np.isclose(col, -99.9, rtol=0, atol=0.05), np.nan)
+    for c in _PLOT_MISSING_LR4000_TEMPS:
+        if c not in out.columns:
+            continue
+        col = pd.to_numeric(out[c], errors="coerce")
+        out[c] = col.mask(np.isclose(col, -99.99, rtol=0, atol=0.01), np.nan)
+    return out
+
 
 def _qc_marker_slices(df, mask, ycol, param_facet, level, chunks):
     """Append marker rows for timestamps where mask is True and y is finite."""
@@ -150,12 +181,16 @@ def _load_month_archive_for_daily(file_path=None, df=None):
     geometry, PPL masks, clear-sky, or QC.
 
     加载单月并加入闭合诊断量。帧上须已有 ``zenith``、``apparent_zenith``（``solpos()``）。
-    本模块不计算几何、不做 PPL/晴空/QC。
+    本模块不计算几何、不做 PPL/晴空/QC。为绘图可读性，会将 LR 缺失码
+    （``-999``、``-99.9``、``-99.99`` 等）在**副本**上替换为 NaN；不修改
+    :meth:`~bsrn.dataset.BSRNDataset.data` 的缓存。
     """
     if df is not None:
         plot_df = df.copy()
     else:
         plot_df = BSRNDataset.from_file(file_path).data()
+
+    plot_df = _mask_bsrn_missing_for_plot(plot_df)
 
     unique_months = np.unique(plot_df.index.to_period("M"))
     if len(unique_months) != 1:
