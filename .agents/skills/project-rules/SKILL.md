@@ -5,7 +5,7 @@ description: Standards and governance for the bsrn project, including naming con
 
 # 🤖 Project Standards & Governance
 
-This document defines the naming conventions, scientific symbols, and bilingual (English/Chinese) translations used throughout the `bsrn` project.
+This document defines the naming conventions, scientific symbols, and documentation standards used throughout the `bsrn` project.
 
 **Contributors and automated agents** MUST read this skill **before** editing project code and **apply** the rules below (especially §Documentation — function signatures and docstrings). Treat it as binding, not background.
 
@@ -13,62 +13,62 @@ This document defines the naming conventions, scientific symbols, and bilingual 
 
 Code variables and documentation **MUST** strictly adhere to the following table:
 
-| Acronym | Code Name | Symbol | Full English Name | Full Chinese Name |
-| :--- | :--- | :--- | :--- | :--- |
-| **GHI** | `ghi` | $G_h$ | global horizontal irradiance | 水平总辐照度 |
-| **BNI** | `bni` | $B_n$ | beam normal irradiance | 法向直接辐照度 |
-| **DHI** | `dhi` | $D_h$ | diffuse horizontal irradiance | 水平散射辐照度 |
-| **LWD** | `lwd` | $L_d$ | downward longwave radiation | 下行长波辐射 |
-| **LWU** | `lwu` | $L_u$ | upward longwave radiation | 上行长波辐射 |
-| **SWU** | `swu` | $S_u$ | upward shortwave radiation | 上行短波辐射 |
-| **NET** | `net` | $R_n$ | net radiation | 净辐射 |
-| **SZA** | `zenith` | $Z$ | solar zenith angle | 太阳天顶角 |
-| **cosSZA** | `mu0` | $\mu_0$ | cosine of SZA | 余弦天顶角 |
-| **SAA** | `azimuth` | $\phi$ | solar azimuth angle | 太阳方位角 |
-| **GHIC** | `ghi_clear` | $G_{hc}$ | clear-sky GHI | 晴空水平总辐照度 |
-| **BNIC** | `bni_clear` | $B_{nc}$ | clear-sky BNI | 晴空法向直接辐照度 |
-| **DHIC** | `dhi_clear` | $D_{hc}$ | clear-sky DHI | 晴空水平散射辐照度 |
-| **LWDC** | `lwd_clear` | $L_{dc}$ | clear-sky LWD | 晴空下行长波辐射 |
-| **LWUC** | `lwu_clear` | $L_{uc}$ | clear-sky LWU | 晴空上行长波辐射 |
-| **BNIE** | `bni_extra` | $E_{0n}$ | extraterrestrial BNI | 地外法向辐照度 |
-| **GHIE** | `ghi_extra` | $E_{0}$ | extraterrestrial GHI | 地外水平辐照度 |
-| **SC** | `solar_constant` | $E_{\text{sc}}$ | solar constant | 太阳常数 |
-| **CSI** | `kappa` | $\kappa$ | clear-sky index | 晴空指数 |
-| **k_t** | `kt` | $k_t$ | clearness index | 晴朗指数 |
-| **K_t** (daily) | `Kt` | $K_t$ | daily clearness index | 日晴朗指数 |
-| **k_b** | `kb` | $k_b$ | beam transmittance | 直射透射率 |
-| **k_d** | `kd` | $k_d$ | diffuse transmittance | 散射透射率 |
-| **k** | `k` | $k$ | diffuse fraction | 散射分数 |
-| **TMP** | `temp` | $T$ | air temperature | 空气温度 |
-| **RH** | `rh` | $RH$ | relative humidity | 相对湿度 |
-| **SP** | `pressure` | $P$ | station pressure | 站点气压 |
+| Acronym | Code Name | Symbol | Full Name |
+| :--- | :--- | :--- | :--- |
+| **GHI** | `ghi` | $G_h$ | global horizontal irradiance |
+| **BNI** | `bni` | $B_n$ | beam normal irradiance |
+| **DHI** | `dhi` | $D_h$ | diffuse horizontal irradiance |
+| **LWD** | `lwd` | $L_d$ | downward longwave radiation |
+| **LWU** | `lwu` | $L_u$ | upward longwave radiation |
+| **SWU** | `swu` | $S_u$ | upward shortwave radiation |
+| **NET** | `net` | $R_n$ | net radiation |
+| **SZA** | `zenith` | $Z$ | solar zenith angle |
+| **cosSZA** | `mu0` | $\mu_0$ | cosine of SZA |
+| **SAA** | `azimuth` | $\phi$ | solar azimuth angle |
+| **GHIC** | `ghi_clear` | $G_{hc}$ | clear-sky GHI |
+| **BNIC** | `bni_clear` | $B_{nc}$ | clear-sky BNI |
+| **DHIC** | `dhi_clear` | $D_{hc}$ | clear-sky DHI |
+| **LWDC** | `lwd_clear` | $L_{dc}$ | clear-sky LWD |
+| **LWUC** | `lwu_clear` | $L_{uc}$ | clear-sky LWU |
+| **BNIE** | `bni_extra` | $E_{0n}$ | extraterrestrial BNI |
+| **GHIE** | `ghi_extra` | $E_{0}$ | extraterrestrial GHI |
+| **SC** | `solar_constant` | $E_{\text{sc}}$ | solar constant |
+| **CSI** | `kappa` | $\kappa$ | clear-sky index |
+| **k_t** | `kt` | $k_t$ | clearness index |
+| **K_t** (daily) | `Kt` | $K_t$ | daily clearness index |
+| **k_b** | `kb` | $k_b$ | beam transmittance |
+| **k_d** | `kd` | $k_d$ | diffuse transmittance |
+| **k** | `k` | $k$ | diffuse fraction |
+| **TMP** | `temp` | $T$ | air temperature |
+| **RH** | `rh` | $RH$ | relative humidity |
+| **SP** | `pressure` | $P$ | station pressure |
 
 ---
 
 ## 🚩 Quality Control Flags
 - For the data points that do not pass **PPL test**, we **MUST** use the following flag names:
-    - `flagPPLGHI`: Flag for GHI physically possible limit test / GHI 物理可能范围测试标记
-    - `flagPPLBNI`: Flag for BNI physically possible limit test / BNI 物理可能范围测试标记
-    - `flagPPLDHI`: Flag for DHI physically possible limit test / DHI 物理可能范围测试标记
-    - `flagPPLLWD`: Flag for LWD physically possible limit test / LWD 物理可能范围测试标记
+    - `flagPPLGHI`: Flag for GHI physically possible limit test
+    - `flagPPLBNI`: Flag for BNI physically possible limit test
+    - `flagPPLDHI`: Flag for DHI physically possible limit test
+    - `flagPPLLWD`: Flag for LWD physically possible limit test
 - For the data points that do not pass **ERL test**, we **MUST** use the following flag names:
-    - `flagERLGHI`: Flag for GHI extremely rare limit test / GHI 极罕见范围测试标记
-    - `flagERLBNI`: Flag for BNI extremely rare limit test / BNI 极罕见范围测试标记
-    - `flagERLDHI`: Flag for DHI extremely rare limit test / DHI 极罕见范围测试标记
-    - `flagERLLWD`: Flag for LWD extremely rare limit test / LWD 极罕见范围测试标记
+    - `flagERLGHI`: Flag for GHI extremely rare limit test
+    - `flagERLBNI`: Flag for BNI extremely rare limit test
+    - `flagERLDHI`: Flag for DHI extremely rare limit test
+    - `flagERLLWD`: Flag for LWD extremely rare limit test
 - For the data points that do not pass **Closure test**, we **MUST** use the following flag names:
-    - `flag3lowSZA`: Flag for closure test at low SZA ($Z \le 75^\circ$) / 低太阳天顶角 ($\le 75^\circ$) 下的闭合测试标记
-    - `flag3highSZA`: Flag for closure test at high SZA ($Z > 75^\circ$) / 高太阳天顶角 ($> 75^\circ$) 下的闭合测试标记
+    - `flag3lowSZA`: Flag for closure test at low SZA ($Z \le 75^\circ$)
+    - `flag3highSZA`: Flag for closure test at high SZA ($Z > 75^\circ$)
 - For the data points that do not pass **Diffuse ratio (k) test**, we **MUST** use the following flag names:
-    - `flagKKt`: Flag for combined $k$ and $k_t$ test ($k < 0.96$) / $k$ 和 $k_t$ 结合测试标记 ($k < 0.96$)
-    - `flagKlowSZA`: Flag for diffuse ratio test at low SZA ($Z < 75^\circ$, $k < 1.05$) / 低太阳天顶角 ($Z < 75^\circ$) 下的散射分数测试标记 ($k < 1.05$)
-    - `flagKhighSZA`: Flag for diffuse ratio test at high SZA ($Z \ge 75^\circ$, $k < 1.1$) / 高太阳天顶角 ($Z \ge 75^\circ$) 下的散射分数测试标记 ($k < 1.1$)
+    - `flagKKt`: Flag for combined $k$ and $k_t$ test ($k < 0.96$)
+    - `flagKlowSZA`: Flag for diffuse ratio test at low SZA ($Z < 75^\circ$, $k < 1.05$)
+    - `flagKhighSZA`: Flag for diffuse ratio test at high SZA ($Z \ge 75^\circ$, $k < 1.1$)
 - For the data points that do not pass **k-index test**, we **MUST** use the following flag names:
-    - `flagKbKt`: Flag for $k_b < k_t$ test / $k_b$ 小于 $k_t$ 测试标记
-    - `flagKb`: Flag for $k_b$ physical limit test / $k_b$ 物理限值测试标记
-    - `flagKt`: Flag for $k_t$ physical limit test / $k_t$ 物理限值测试标记
+    - `flagKbKt`: Flag for $k_b < k_t$ test
+    - `flagKb`: Flag for $k_b$ physical limit test
+    - `flagKt`: Flag for $k_t$ physical limit test
 - For the data points that do not pass **Tracker-off test**, we **MUST** use the following flag name:
-    - `flagTracker`: Flag for solar tracker failure detection / 太阳跟踪器失准检测标记
+    - `flagTracker`: Flag for solar tracker failure detection
 
 ---
 
@@ -76,16 +76,16 @@ Code variables and documentation **MUST** strictly adhere to the following table
 
 > ### **REQUIRED — Public function docstrings (NumPy style)**
 >
-> Every **function** and **public method** (including module-level callables and class methods that form the API) **MUST** use NumPy-style docstrings with **bilingual** English / 中文 lines as elsewhere in this skill.
+> Every **function** and **public method** (including module-level callables and class methods that form the API) **MUST** use NumPy-style docstrings in English (see **Docstring Structure** below).
 >
 > **Required sections (in order):**
 >
-> 1. **Summary** — one English line + one 中文 line (or the length rule from §1 if longer).
+> 1. **Summary** — concise English description.
 > 2. **`Parameters`** — always present if the callable has parameters (use `None` / optional wording where needed).
 > 3. **`Returns`** — always present unless the callable returns `None` *and* that is obvious; prefer an explicit ``None`` description when the function exists only for side effects.
 > 4. **`Raises`** — **whenever** the body can raise a documented exception (typically `ValueError`, `TypeError`, `KeyError`, etc.). Omit the section only if truly no exception is part of the contract.
 >
-> **`References`** — still **MUST** appear when the implementation follows a paper or external spec (see §3).
+> **`References`** — still **MUST** appear when the implementation follows a paper or external spec (see §2).
 >
 > Data-only modules (e.g. large static dicts with no functions) are exempt from per-function docstrings.
 
@@ -107,47 +107,31 @@ Code variables and documentation **MUST** strictly adhere to the following table
 > - **MUST NOT** default to **one parameter per line** (vertical “arg list”) when a compact multi-parameter line still fits the 80-character rule. Use a vertical list only when unavoidable (e.g. many parameters or long default expressions), still grouping parameters to minimize line count.
 > - The same **80-character, grouped** idea applies to **long function calls** when you must break them across lines: avoid one argument per line unless necessary; prefer breaking after a comma with **multiple arguments on the continuation line** where possible.
 
-### 1. Bilingual Comments
-- **MUST** follow the length-dependent format:
-    - If the combined line is shorter than 80 characters: Use `# English / 中文` format on a single line.
-    - If the combined line exceeds 80 characters: Use two separate lines.
-- Example (Short): `# Fetch data / 获取数据`
-- Example (Long):
-    ```python
-    # Calculate extraterrestrial horizontal irradiance
-    # 计算地外水平辐照度
-    ```
-
-
-### 2. Docstring Structure
-- **MUST** use NumPy/SciPy style with bilingual descriptions.
-- **MUST** include both English and Chinese in the summary and parameter descriptions.
+### 1. Docstring Structure
+- **MUST** use NumPy/SciPy style with English descriptions.
+- **MUST** include English in the summary and parameter descriptions.
 - **MUST** include **`Parameters`**, **`Returns`**, and **`Raises`** (when applicable); see the **highlighted box above**.
 - **MUST** include a `References` section at the end of the docstring for functions based on literature.
 
 ```python
 def function_name(param):
     """
-    English summary here.
-    此处为中文摘要。
+    One-line summary of what the function does.
 
     Parameters
     ----------
     param : type
-        English description.
-        中文描述。
+        Description of param.
 
     Returns
     -------
     result : type
-        English description.
-        中文描述。
+        Description of return value.
 
     Raises
     ------
     ValueError
         When validation fails.
-        校验失败时。
 
     References
     ----------
@@ -155,12 +139,12 @@ def function_name(param):
     """
 ```
 
-### 3. Citations
+### 2. Citations
 - **MUST** follow **APA style** for all citations (e.g. Author, A. (Year). Title. Journal, Vol(Issue), Pages).
 - **MUST** use the reStructuredText citation format (`.. [1]`) within the docstring's `References` section.
 - **MUST** use sentence case for scientific paper titles in references.
 
-### 4. Naming & Consistency
+### 3. Naming & Consistency
 - **MUST** use the exact **Code Name** from the Radiometric Parameters table above for **all** local variables, function parameters, and intermediate results. The table is the single source of truth.
 - **DO NOT** invent synonyms or pvlib-style aliases. Common mistakes and their **mandatory** replacements:
 
@@ -181,7 +165,7 @@ def function_name(param):
 - **MUST** limit general line length to a maximum of **110 characters** (docstrings and comments included), **except** that **`def` signature lines** follow the **80-character** rule in the highlighted box above.
 - **MUST** use sentence case for scientific paper titles in references.
 
-### 5. Function Signature Style
+### 4. Function Signature Style
 - **MUST** follow the **highlighted box** in §Documentation: **no `->` return annotations**, **≤ 80 characters per signature line**, **group parameters** on wrapped lines (avoid one-parameter-per-line unless necessary).
 - **MUST** use compact signatures: required parameters first, then optional parameters with defaults.
 - If wrapping is needed, **MUST** split into **a few short lines**: group several parameters per line so **each line stays ≤ 80 characters** for the `def` line(s).
@@ -189,20 +173,20 @@ def function_name(param):
 - Example (short, one line): `def add_clearsky_columns(df, station_code=None, lat=None, lon=None, elev=None, model="ineichen"):`
 - Example (wrapped, two lines, ≤80 chars each): break after a comma so the next line holds **multiple** parameters, not one per line; **do not** put only `def name(` on the first line (see highlighted box above).
 
-### 6. Output Directory
+### 5. Output Directory
 - All generated plots and figures **MUST** be saved to the project root directory.
 - **DO NOT** save output files into `tests/`, `src/`, or other source directories.
 
-### 7. Git Usage
+### 6. Git Usage
 - **DO NOT** push to git unless explicitly instructed by the USER.
 - **MUST** exclude all PDF files (`*.pdf`) from Git to avoid bloat in the repository.
 
-### 8. BSRN File Handling Policy
+### 7. BSRN File Handling Policy
 - **Single-file workflow**: All high-level workflows (QC, clear-sky modeling, CSD, separation, visualization) **MUST** operate on **one BSRN station-to-archive file at a time** (for example, a single `XXXMMYY.dat.gz` monthly file).
 - **No implicit concatenation**: Library functions **MUST NOT** silently concatenate multiple months or years internally. If users need multi-month analyses, they **MUST** loop over files and combine results explicitly at the application level.
 - **Index scope**: Within a single run, functions **MUST** assume that the `DatetimeIndex` comes from a single contiguous BSRN monthly file; cross-file or cross-year assumptions are out of scope for the core package.
 
-### 9. Visualization & Aesthetics
+### 8. Visualization & Aesthetics
 - **Color Palettes**:
     - **Discrete Variables**: **MUST** use the **Wong colorblind-friendly palette**. Colors **MUST** be used in this specific order based on the number of categories:
         1. `#E69F00` (Orange)

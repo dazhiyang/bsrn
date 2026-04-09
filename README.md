@@ -250,7 +250,6 @@ df = add_clearsky_columns(df, "QIQ")
 from bsrn.modeling.clear_sky import add_clearsky_columns
 
 # McClear data are available from 2004-01-01 onward.
-# McClear 数据自 2004-01-01 起可用。
 df = add_clearsky_columns(
     df,
     station_code="QIQ",
@@ -348,6 +347,15 @@ cmp tests/2025-01/Output/qiq0125_run.dat tests/2025-01/Output/qiq0125_ref.dat
 ```
 
 Edit the `CONFIG` block at the top of `2.station_to_archive.py` for station-specific paths and metadata; the script expects the minute table at `tests/2025-01/Output/qiq0125.txt` for the default QIQ January 2025 example.
+
+## Project standards
+
+Development in this repository follows **`.agents/skills/project-rules/SKILL.md`**. In short:
+
+- **Naming:** Use the radiometric **code names** from the skill (e.g. `ghi`, `bni`, `zenith`, `mu0`, `kt`, `Kt`, `ghi_extra`, `bni_extra`). In READMEs and technical docs, prefer **LaTeX-style symbols** (e.g. $G_h$, $B_n$, $k_t$) as there.
+- **Documentation:** Public functions use **NumPy-style docstrings in English** (`Parameters`, `Returns`, `Raises` when applicable; `References` when based on literature). **Do not** use `->` return annotations on `def` lines; describe returns in the docstring.
+- **BSRN data:** High-level workflows assume **one station archive file at a time** (e.g. one `XXXMMYY.dat.gz` per run); do not rely on silent multi-month concatenation inside the library.
+- **Figures (when contributing plots):** Prefer **vector PDF** output, **Times New Roman** typography, and the **Wong** (discrete) / **Viridis** (continuous) palette conventions described in the skill; save generated figures to the **project root**, not under `src/` or `tests/`.
 
 ## 📜 License
 
