@@ -87,8 +87,10 @@ def get_solar_position(times, lat, lon, elev=0, pressure=None, temp=12.0):
     .. [2] Anderson, K. S., et al. (2023). pvlib python: 2023 project update. 
        Journal of Open Source Software, 8(92), 5994.
     """
-    # Convert times to unix timestamp
-    unixtime = times.view(np.int64) / 1e9
+    # Unix time [s]. Epoch subtraction is robust to DatetimeIndex resolution
+    # (e.g. datetime64[ns] vs datetime64[us]); ``.view(np.int64) / 1e9`` is not.
+    _epoch = pd.Timestamp("1970-01-01", tz="UTC")
+    unixtime = ((times - _epoch) / pd.Timedelta(seconds=1)).to_numpy(dtype=float)
     
     # Calculate pressure if not provided (standard atmosphere)
     if pressure is None:
