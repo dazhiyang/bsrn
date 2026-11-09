@@ -358,15 +358,24 @@ out = LR0001(stationNumber=94, month=1, year=2024, version=1).get_bsrn_format()
 
 For minute blocks, pass `yearMonth="YYYY-MM"` and `pandas.Series` or `numpy.ndarray` per column (see `LR_SPECS["LR0100"]` / `["LR4000"]`), then `LR0100(...).get_bsrn_format(changed=True)` (and similarly for LR4000).
 
-**Regression check (repository checkout):** from the repo root, generate a monthly `.dat` and compare to the checked-in reference (should match byte-for-byte):
+## Correctness checks
+
+From a repository checkout, install the package and run the offline suite:
 
 ```bash
-PYTHONPATH=src python tests/2025-01/Code/2.station_to_archive.py \
-  -o tests/2025-01/Output/qiq0125_run.dat --no-gzip
-cmp tests/2025-01/Output/qiq0125_run.dat tests/2025-01/Output/qiq0125_ref.dat
+python -m pip install -e .
+python -m unittest discover -s tests -v
 ```
 
-Edit the `CONFIG` block at the top of `2.station_to_archive.py` for station-specific paths and metadata; the script expects the minute table at `tests/2025-01/Output/qiq0125.txt` for the default QIQ January 2025 example.
+The tests use synthetic inputs; no BSRN credentials or downloads are needed.
+They check physically possible QC boundaries and missing values, solar position
+against the published NREL SPA example, equivalent timestamps across time zones
+and resolutions, a synthetic monthly archive write/read round trip, invalid
+monthly vector lengths, and irradiance separation energy closure.
+
+The SPA comparison allows 0.001 degrees because the package uses a fixed
+$\Delta T$ differing from the published example. These checks are an initial
+suite, not validation of every model or external data service.
 
 ## Project standards
 

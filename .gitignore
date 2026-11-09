@@ -30,8 +30,9 @@ data/
 *.pdf
 tmp_plot_*.py
 
-# Tests
-tests/
+# Keep offline correctness checks; exclude local test data.
+/tests/*
+!/tests/test_correctness.py
 
 # Sphinx
 docs/_build/
