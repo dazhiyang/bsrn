@@ -360,6 +360,9 @@ For minute blocks, pass `yearMonth="YYYY-MM"` and `pandas.Series` or `numpy.ndar
 
 ## Correctness checks
 
+GitHub Actions runs these checks on every push and pull request using
+Python 3.9–3.14 on Linux. Runs are available in the repository’s Actions tab.
+
 From a repository checkout, install the package and run the offline suite:
 
 ```bash
