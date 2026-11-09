@@ -11,7 +11,8 @@ permissions:
 jobs:
   correctness:
     name: Python ${{ matrix.python-version }}
-    runs-on: ubuntu-latest
+    # Keep Python 3.9 available rather than following ubuntu-latest.
+    runs-on: ubuntu-22.04
     timeout-minutes: 15
     strategy:
       fail-fast: false
